@@ -112,7 +112,22 @@ html.dark .side-rail a.active{color:#34d399;background:linear-gradient(135deg,rg
 .glass:active{transform:scale(.995)}
 .scrim-text{text-shadow:0 2px 12px rgba(0,0,0,.55),0 1px 2px rgba(0,0,0,.5)}
 @media(max-width:767px){.modal-card{max-width:none;width:100%;max-height:96vh;height:96vh;border-radius:1.5rem 1.5rem 0 0;padding:1rem 1rem calc(1.25rem + env(safe-area-inset-bottom)) 1rem}}
-@media(max-width:767px){.modal-card.has-handle::before{content:"";display:block;width:38px;height:4px;border-radius:2px;background:rgba(148,163,184,.45);margin:0 auto .75rem auto}}
+.modal-card.has-handle::before{content:"";display:block;width:38px;height:4px;border-radius:2px;background:rgba(148,163,184,.45);margin:0 auto .75rem auto}
+
+/* Quick Add wizard */
+.qa-big-input{width:100%;font-size:2.75rem;font-weight:800;font-variant-numeric:tabular-nums;background:transparent;border:0;border-bottom:2px solid rgba(16,185,129,.35);padding:1.4rem 0 1.4rem 2.75rem;color:inherit;outline:none;transition:border-color .15s ease}
+.qa-big-input:focus{border-bottom-color:#10b981}
+.qa-big-input::placeholder{color:rgba(148,163,184,.55);font-weight:600}
+.qa-cat-on{border-color:#10b981!important;background:rgba(16,185,129,.12)!important;box-shadow:0 6px 18px -8px rgba(16,185,129,.5);transform:scale(1.04)}
+html.dark .qa-cat-on{background:rgba(16,185,129,.22)!important}
+.qa-step{animation:qaFade .25s ease both}
+@keyframes qaFade{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:none}}
+.qa-step-2{animation-name:qaFadeL}
+.qa-step-3{animation-name:qaFadeL}
+.qa-step-4{animation-name:qaFadeL}
+@keyframes qaFadeL{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.qa-quick-pick{cursor:pointer}
+.qa-next[disabled]{opacity:.55;cursor:not-allowed}
 .skeleton{background:linear-gradient(90deg,rgba(148,163,184,.15) 25%,rgba(148,163,184,.35) 50%,rgba(148,163,184,.15) 75%);background-size:200% 100%;animation:skel 1.4s ease-in-out infinite}
 @keyframes skel{from{background-position:200% 0}to{background-position:-200% 0}}
 </style>
@@ -483,7 +498,7 @@ function bottomTabs(active){
 function renderLayout(active){
   const app=document.getElementById('app');
   const showFab=active!=='circles'&&active!=='settings';
-  const fab=showFab?`<button class="fab" onclick="openAddExpense()" title="Add expense" aria-label="Add expense">
+  const fab=showFab?`<button class="fab" onclick="openQuickAdd()" title="Add expense" aria-label="Add expense">
     <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
   </button>`:'';
   app.innerHTML=`
@@ -1216,6 +1231,182 @@ function closeModal(){
   destroyCharts();
 }
 /* ========= EXPENSE MODAL ========= */
+function openQuickAdd(){
+  const role=myRole(STATE.currentCircleId,STATE.currentUserId);
+  if(!can.log(role)){notifyError('Your role only allows viewing');return}
+  const c=currentCircle();if(!c)return;
+  const currency=STATE.settings.currency;
+  const sym=currency==='PHP'?'₱':currency==='USD'?'$':'€';
+  const payers=c.members.filter(m=>userById(m.userId));
+  const m=document.createElement('div');m.className='modal-backdrop';
+  // Initial state lives in dataset on the card so handlers don't need a global
+  m.innerHTML=`
+    <div class="modal-card has-handle qa-wizard" data-step="1">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="font-bold text-lg qa-title">Add expense</h3>
+        <button onclick="closeModal()" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 tap-fb">${ico('x','w-5 h-5')}</button>
+      </div>
+      <div class="qa-progress flex gap-1.5 mb-4">
+        <div class="qa-pip h-1.5 flex-1 rounded-full bg-emerald-500 transition-colors"></div>
+        <div class="qa-pip h-1.5 flex-1 rounded-full bg-slate-200 dark:bg-slate-700 transition-colors"></div>
+        <div class="qa-pip h-1.5 flex-1 rounded-full bg-slate-200 dark:bg-slate-700 transition-colors"></div>
+        <div class="qa-pip h-1.5 flex-1 rounded-full bg-slate-200 dark:bg-slate-700 transition-colors"></div>
+      </div>
+
+      <!-- Step 1: Amount -->
+      <div class="qa-step qa-step-1 flex flex-col gap-3">
+        <p class="text-sm text-slate-500">How much?</p>
+        <div class="relative">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-3xl font-bold text-slate-400 qa-sym">${sym}</span>
+          <input id="qa-amount" type="number" step="0.01" min="0" inputmode="decimal" class="qa-big-input" placeholder="0" autofocus />
+        </div>
+        <p class="text-xs text-slate-400 qa-amount-preview"></p>
+      </div>
+
+      <!-- Step 2: Category -->
+      <div class="qa-step qa-step-2 hidden flex-col gap-3">
+        <p class="text-sm text-slate-500">What was it for?</p>
+        <div class="grid grid-cols-4 gap-2" id="qa-cats">
+          ${CATEGORIES.map((cat,i)=>`<button type="button" data-cat="${cat.key}" onclick="qaPickCategory('${cat.key}')" class="qa-cat flex flex-col items-center gap-1 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 ${i===0?'qa-cat-on':''} tap-fb transition-all"><span class="text-2xl">${cat.icon}</span><span class="text-xs">${cat.label}</span></button>`).join('')}
+        </div>
+      </div>
+
+      <!-- Step 3: Paid by -->
+      <div class="qa-step qa-step-3 hidden flex-col gap-3">
+        <p class="text-sm text-slate-500">Who paid?</p>
+        <div class="grid grid-cols-2 gap-2" id="qa-payers">
+          ${payers.map(p=>{const u=userById(p.userId);const me=p.userId===STATE.currentUserId;return `<button type="button" data-payer="${p.userId}" onclick="qaPickPayer('${p.userId}')" class="qa-payer flex items-center gap-2 p-3 rounded-2xl border ${me?'border-emerald-400 bg-emerald-500/10':'border-slate-200 dark:border-slate-700'} tap-fb transition-all"><span class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style="background:${avatarBg(p.userId)}">${initials(u.name)}</span><span class="text-sm font-semibold truncate flex-1 text-left">${escapeHtml(u.name)}</span>${me?'<span class="chip chip-emerald !text-[0.55rem]">you</span>':''}</button>`}).join('')}
+        </div>
+      </div>
+
+      <!-- Step 4: Note -->
+      <div class="qa-step qa-step-4 hidden flex-col gap-3">
+        <p class="text-sm text-slate-500">Add a note <span class="opacity-60">(or skip)</span></p>
+        <input id="qa-note" type="text" class="input" placeholder="e.g. Groceries, Grab, dinner…" />
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" onclick="qaQuickPick('Food')" class="qa-quick-pick chip chip-slate justify-center text-xs py-2 tap-fb">🍱 Food</button>
+          <button type="button" onclick="qaQuickPick('Grab')" class="qa-quick-pick chip chip-slate justify-center text-xs py-2 tap-fb">🚖 Grab</button>
+          <button type="button" onclick="qaQuickPick('Coffee')" class="qa-quick-pick chip chip-slate justify-center text-xs py-2 tap-fb">☕ Coffee</button>
+          <button type="button" onclick="qaQuickPick('Groceries')" class="qa-quick-pick chip chip-slate justify-center text-xs py-2 tap-fb">🛒 Groceries</button>
+        </div>
+        <div class="qa-trip-toggle mt-1 flex items-center gap-2 p-3 rounded-2xl border border-slate-200 dark:border-slate-700">
+          <input type="checkbox" id="qa-trip-on" class="w-4 h-4 accent-emerald-500" />
+          <label for="qa-trip-on" class="text-sm cursor-pointer">Tag to a trip <span class="opacity-60">(optional)</span></label>
+          <select id="qa-trip-sel" class="ml-auto input !py-1.5 !text-xs" disabled></select>
+        </div>
+      </div>
+
+      <div class="qa-actions flex items-center gap-2 mt-5">
+        <button class="btn btn-outline qa-back hidden tap-fb" onclick="qaBack()" aria-label="Back">${ico('chevron-left','w-4 h-4')}</button>
+        <button class="btn btn-emerald flex-1 qa-next tap-fb" onclick="qaNext()" disabled>Continue ${ico('arrow-right','w-4 h-4 ml-auto')}</button>
+      </div>
+      <button class="block mx-auto mt-3 text-xs text-slate-400 underline underline-offset-2 qa-more" onclick="closeModal();openAddExpense()" type="button">More options</button>
+    </div>`;
+  const mr=document.getElementById('modal-root');mr.innerHTML='';mr.appendChild(m);
+  m.addEventListener('click',ev=>{if(ev.target===m)closeModal()});
+  // Pre-populate dataset defaults
+  const card=m.querySelector('.qa-wizard');
+  card.dataset.cat=CATEGORIES[0].key;
+  card.dataset.payer=STATE.currentUserId;
+  // Bind amount keyup for live preview + enable Continue
+  setTimeout(()=>{
+    const a=document.getElementById('qa-amount');
+    if(a){a.focus();a.addEventListener('input',qaOnAmountInput);a.addEventListener('keydown',e=>{if(e.key==='Enter')qaNext()})}
+    // Trip toggle: enable select when checkbox on
+    const tgl=document.getElementById('qa-trip-on');
+    const sel=document.getElementById('qa-trip-sel');
+    if(tgl&&sel){tgl.addEventListener('change',()=>{sel.disabled=!tgl.checked;if(tgl.checked)qaTripSelRefresh()});sel.addEventListener('change',()=>{sel.dataset.userPick='1'})}
+  },80);
+  qaRenderPips();
+}
+function qaOnAmountInput(){
+  const a=document.getElementById('qa-amount');
+  const v=parseFloat(a.value||'0');
+  const cur=STATE.settings.currency;
+  const card=document.querySelector('.qa-wizard');
+  const preview=document.querySelector('.qa-amount-preview');
+  if(!isNaN(v)&&v>0){preview.textContent='≈ '+fmtMoney(v,cur);qaSetNextEnabled(true)}else{preview.textContent='';qaSetNextEnabled(false)}
+}
+function qaSetNextEnabled(on){
+  const b=document.querySelector('.qa-next');if(b)b.disabled=!on;
+  if(on){b.classList.remove('opacity-60')}else{b.classList.add('opacity-60')}
+}
+function qaPickCategory(k){
+  const card=document.querySelector('.qa-wizard');card.dataset.cat=k;
+  document.querySelectorAll('#qa-cats [data-cat]').forEach(b=>{const on=b.getAttribute('data-cat')===k;b.classList.toggle('qa-cat-on',on)});
+  // Cat step is auto-advancing — small UX touch: tap a category, move forward
+  setTimeout(()=>{if(card.dataset.step==='2')qaNext()},140);
+}
+function qaPickPayer(id){
+  const card=document.querySelector('.qa-wizard');card.dataset.payer=id;
+  document.querySelectorAll('#qa-payers [data-payer]').forEach(b=>{const on=b.getAttribute('data-payer')===id;b.classList.toggle('border-emerald-400',on);b.classList.toggle('bg-emerald-500/10',on);b.classList.toggle('border-slate-200',!on);b.classList.toggle('dark:border-slate-700',!on)});
+  setTimeout(()=>{if(card.dataset.step==='3')qaNext()},140);
+}
+function qaQuickPick(text){
+  const n=document.getElementById('qa-note');n.value=text;n.focus();
+}
+function qaTripSelRefresh(){
+  const sel=document.getElementById('qa-trip-sel');if(!sel)return;
+  const trips=(STATE.trips||[]).filter(t=>t.circleId===STATE.currentCircleId);
+  sel.innerHTML=trips.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
+}
+function qaBack(){
+  const card=document.querySelector('.qa-wizard');let step=parseInt(card.dataset.step||'1');
+  if(step<=1){closeModal();return}
+  qaGoTo(step-1);
+}
+function qaNext(){
+  const card=document.querySelector('.qa-wizard');let step=parseInt(card.dataset.step||'1');
+  if(step>=4){qaSave();return}
+  // Validate each step
+  if(step===1){
+    const v=parseFloat((document.getElementById('qa-amount').value||'0'));
+    if(isNaN(v)||v<=0){notifyError('Enter a valid amount');return}
+  }
+  qaGoTo(step+1);
+}
+function qaGoTo(step){
+  const card=document.querySelector('.qa-wizard');card.dataset.step=String(step);
+  document.querySelectorAll('.qa-step').forEach(el=>el.classList.add('hidden'));
+  document.querySelector('.qa-step-'+step).classList.remove('hidden');
+  const titles={1:'Add expense',2:'Add expense',3:'Add expense',4:'Almost done!'};
+  document.querySelector('.qa-title').textContent=titles[step];
+  qaRenderPips();
+  const back=document.querySelector('.qa-back');back.classList.toggle('hidden',step===1);
+  const next=document.querySelector('.qa-next');
+  if(step===4){
+    next.innerHTML='Save '+ico('check','w-4 h-4 ml-2');
+    qaTripSelRefresh();
+    setTimeout(()=>{const n=document.getElementById('qa-note');if(n)n.focus()},60);
+  } else if(step===1){
+    next.innerHTML='Continue '+ico('arrow-right','w-4 h-4 ml-auto');
+    qaSetNextEnabled(parseFloat((document.getElementById('qa-amount').value||0))>0);
+  } else {
+    next.innerHTML='Continue '+ico('arrow-right','w-4 h-4 ml-auto');
+    qaSetNextEnabled(true);
+  }
+}
+function qaRenderPips(){
+  const step=parseInt((document.querySelector('.qa-wizard')||{}).dataset?.step||'1');
+  document.querySelectorAll('.qa-pip').forEach((p,i)=>{p.classList.toggle('bg-emerald-500',i<step);p.classList.toggle('bg-slate-200',i>=step)});
+  const dark=document.documentElement.classList.contains('dark');
+  document.querySelectorAll('.qa-pip').forEach((p,i)=>{if(i>=step)p.classList.toggle('dark:bg-slate-700',dark);else p.classList.remove('dark:bg-slate-700')});
+}
+function qaSave(){
+  const card=document.querySelector('.qa-wizard');
+  const amount=parseFloat(document.getElementById('qa-amount').value||'0');
+  const cat=card.dataset.cat||'food';
+  const payer=card.dataset.payer||STATE.currentUserId;
+  const note=(document.getElementById('qa-note').value||'').trim();
+  const date=todayStr();
+  if(isNaN(amount)||amount<=0){notifyError('Enter a valid amount');return}
+  const baseTripOn=document.getElementById('qa-trip-on')?.checked;
+  const baseTripSel=document.getElementById('qa-trip-sel')?.value;
+  const exp={id:uid('e'),circleId:STATE.currentCircleId,amount,category:cat,payer,date,note,createdAt:new Date().toISOString(),createdBy:STATE.currentUserId};
+  if(baseTripOn&&baseTripSel){exp.tripId=baseTripSel}
+  STATE.expenses.unshift(exp);
+  saveState();closeModal();notifySuccess('Added '+fmtMoney(amount,STATE.settings.currency));route();
+}
 function openAddExpense(editId){
   const role=myRole(STATE.currentCircleId,STATE.currentUserId);
   if(!can.log(role)){notifyError('Your role only allows viewing');return}
@@ -1557,6 +1748,7 @@ function applySavedTheme(){
 document.addEventListener('DOMContentLoaded',init);
 /* expose for onclick handlers */
 window.openAddExpense=openAddExpense;window.closeModal=closeModal;window.openUserSwitcher=openUserSwitcher;window.switchUser=switchUser;
+window.openQuickAdd=openQuickAdd;window.qaPickCategory=qaPickCategory;window.qaPickPayer=qaPickPayer;window.qaNext=qaNext;window.qaBack=qaBack;window.qaQuickPick=qaQuickPick;window.qaSave=qaSave;
 window.openCircleSwitcher=openCircleSwitcher;window.switchCircle=switchCircle;window.openAddTrip=openAddTrip;window.openTripDetail=openTripDetail;window.deleteTrip=deleteTrip;
 window.createCircle=createCircle;window.joinCircleSubmit=joinCircleSubmit;window.openManageCircle=openManageCircle;window.changeMemberRole=changeMemberRole;
 window.removeMember=removeMember;window.addMember=addMember;window.copyInviteCode=copyInviteCode;window.saveExpense=saveExpense;window.saveTrip=saveTrip;
