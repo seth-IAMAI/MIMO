@@ -1,0 +1,1547 @@
+<!doctype html>
+<html lang="en" class="">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<meta name="theme-color" content="#10b981" />
+<title>MIMO — Money In Money Out</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2310b981' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 7h12a4 4 0 0 1 0 8H8a3 3 0 0 0 0 6h13'/%3E%3Cpath d='M21 12V6'/%3E%3Cpath d='M17 6l4 0 0 4'/%3E%3C/svg%3E" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','system-ui','-apple-system','Segoe UI','Roboto','sans-serif'],display:['Inter','system-ui','sans-serif']},colors:{ink:{50:'#f8fafc',100:'#f1f5f9',200:'#e2e8f0',300:'#cbd5e1',400:'#94a3b8',500:'#64748b',600:'#475569',700:'#334155',800:'#1e293b',900:'#0f172a'}},boxShadow:{glass:'0 8px 32px 0 rgba(31,38,135,0.18)',soft:'0 4px 20px 0 rgba(15,23,42,0.06)'}}}}
+</script>
+<style>
+:root{--c-bg:236 252 245;--c-bg2:255 255 255;--c-tint:16 185 129;--c-rose:244 63 94;--c-ink:15 23 42;--c-muted:100 116 139}
+html.dark{--c-bg:2 6 23;--c-bg2:15 23 42;--c-tint:52 211 153;--c-rose:251 113 133;--c-ink:248 241 226;--c-muted:148 163 184}
+html,body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-feature-settings:'cv11','ss01','ss03';-webkit-font-smoothing:antialiased}
+html{background:radial-gradient(60% 60% at 10% 0%,rgba(16,185,129,.18),transparent 60%),radial-gradient(60% 60% at 90% 10%,rgba(244,63,94,.12),transparent 60%),linear-gradient(180deg,rgb(var(--c-bg)) 0%,rgb(var(--c-bg)) 100%)}
+html.dark{background:radial-gradient(60% 60% at 10% 0%,rgba(16,185,129,.18),transparent 60%),radial-gradient(60% 60% at 90% 10%,rgba(244,63,94,.10),transparent 60%),linear-gradient(180deg,rgb(var(--c-bg)) 0%,rgb(var(--c-bg)) 100%)}
+body{color:rgb(var(--c-ink));min-height:100dvh;overflow-x:hidden}
+.glass{background:rgba(255,255,255,.62);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border:1px solid rgba(255,255,255,.45);box-shadow:0 8px 32px rgba(15,23,42,.08),inset 0 1px 0 rgba(255,255,255,.5)}
+html.dark .glass{background:rgba(15,23,42,.62);border:1px solid rgba(51,65,85,.55);box-shadow:0 8px 32px rgba(0,0,0,.35),inset 0 1px 0 rgba(148,163,184,.08)}
+.glass-strong{background:rgba(255,255,255,.85);backdrop-filter:blur(28px) saturate(160%);-webkit-backdrop-filter:blur(28px) saturate(160%);border:1px solid rgba(255,255,255,.55)}
+html.dark .glass-strong{background:rgba(15,23,42,.85);border:1px solid rgba(51,65,85,.7)}
+.tabular{font-variant-numeric:tabular-nums;font-feature-settings:'tnum'}
+.brand-mark{font-family:'Inter',system-ui,sans-serif;font-weight:800;letter-spacing:-0.04em}
+.tracking-slim{letter-spacing:-0.06em}
+.cursive{font-style:italic;font-weight:700}
+.fade-in{animation:fadeIn .35s ease both}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.pop-in{animation:popIn .28s cubic-bezier(.2,.9,.3,1.4) both}
+@keyframes popIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.lift{transition:transform .2s ease,box-shadow .2s ease}
+.lift:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(15,23,42,.12)}
+html.dark .lift:hover{box-shadow:0 14px 40px rgba(0,0,0,.5)}
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.625rem 1.1rem;border-radius:1rem;font-weight:600;font-size:.875rem;line-height:1;transition:transform .15s ease,background .15s ease,color .15s ease,box-shadow .15s ease;white-space:nowrap}
+.btn:active{transform:translateY(1px)}
+.btn-emerald{background:linear-gradient(135deg,#10b981,#059669);color:#fff;box-shadow:0 6px 18px rgba(16,185,129,.35)}
+.btn-emerald:hover{background:linear-gradient(135deg,#059669,#047857)}
+.btn-rose{background:linear-gradient(135deg,#f43f5e,#e11d48);color:#fff;box-shadow:0 6px 18px rgba(244,63,94,.30)}
+.btn-rose:hover{background:linear-gradient(135deg,#e11d48,#be123c)}
+.btn-ghost{background:transparent;color:rgb(var(--c-ink))}
+.btn-ghost:hover{background:rgba(148,163,184,.14)}
+.btn-outline{border:1px solid rgba(148,163,184,.4);background:transparent;color:rgb(var(--c-ink))}
+.btn-outline:hover{background:rgba(148,163,184,.12)}
+.chip{display:inline-flex;align-items:center;gap:.35rem;padding:.25rem .55rem;border-radius:999px;font-size:.7rem;font-weight:600;letter-spacing:.02em}
+.chip-emerald{background:rgba(16,185,129,.12);color:#047857}
+html.dark .chip-emerald{background:rgba(16,185,129,.2);color:#6ee7b7}
+.chip-rose{background:rgba(244,63,94,.12);color:#be123c}
+html.dark .chip-rose{background:rgba(244,63,94,.2);color:#fda4af}
+.chip-slate{background:rgba(100,116,139,.14);color:#334155}
+html.dark .chip-slate{background:rgba(100,116,139,.25);color:#cbd5e1}
+.chip-amber{background:rgba(245,158,11,.14);color:#b45309}
+html.dark .chip-amber{background:rgba(245,158,11,.2);color:#fcd34d}
+.chip-purple{background:rgba(139,92,246,.14);color:#6d28d9}
+html.dark .chip-purple{background:rgba(139,92,246,.2);color:#c4b5fd}
+.kpi-num{font-variant-numeric:tabular-nums;font-feature-settings:'tnum';font-weight:700;letter-spacing:-0.02em;line-height:1.05}
+.progress{height:.5rem;background:rgba(148,163,184,.2);border-radius:999px;overflow:hidden}
+.progress-bar{height:100%;border-radius:999px;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.scrollbar-thin::-webkit-scrollbar{width:6px;height:6px}
+.scrollbar-thin::-webkit-scrollbar-thumb{background:rgba(148,163,184,.35);border-radius:999px}
+.scrollbar-thin::-webkit-scrollbar-track{background:transparent}
+.no-scrollbar::-webkit-scrollbar{display:none}
+.no-scrollbar{scrollbar-width:none}
+.input{width:100%;padding:.6rem .8rem;border-radius:.85rem;border:1px solid rgba(148,163,184,.3);background:rgba(255,255,255,.6);color:rgb(var(--c-ink));font-size:.9rem;transition:border-color .15s ease,box-shadow .15s ease}
+html.dark .input{background:rgba(15,23,42,.55);border-color:rgba(71,85,105,.55)}
+.input:focus{outline:none;border-color:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.2)}
+.label{display:block;font-size:.72rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:rgb(var(--c-muted));margin-bottom:.3rem}
+.divider{height:1px;background:linear-gradient(90deg,transparent,rgba(148,163,184,.4),transparent)}
+.gradient-emerald{background:linear-gradient(135deg,#10b981 0%,#059669 100%)}
+.gradient-rose{background:linear-gradient(135deg,#f43f5e 0%,#e11d48 100%)}
+.gradient-blue{background:linear-gradient(135deg,#3b82f6 0%,#2563eb 100%)}
+.gradient-amber{background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%)}
+.gradient-purple{background:linear-gradient(135deg,#8b5cf6 0%,#7c3aed 100%)}
+.gradient-text{background:linear-gradient(135deg,#10b981 0%,#0ea5e9 50%,#f43f5e 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.toast-wrap{position:fixed;left:50%;bottom:1.5rem;transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;gap:.5rem;align-items:center;pointer-events:none}
+.toast{padding:.65rem 1rem;border-radius:.85rem;font-size:.85rem;font-weight:500;color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.18);pointer-events:auto;animation:toastIn .25s ease-out both;max-width:90vw}
+.toast-emerald{background:linear-gradient(135deg,#10b981,#059669)}
+.toast-rose{background:linear-gradient(135deg,#f43f5e,#e11d48)}
+.toast-slate{background:linear-gradient(135deg,#475569,#1e293b)}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.45);backdrop-filter:blur(4px);z-index:70;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .2s ease both}
+@media(min-width:768px){.modal-backdrop{align-items:center}}
+.modal-card{width:100%;max-width:520px;background:rgba(255,255,255,.92);backdrop-filter:blur(24px) saturate(160%);border-radius:1.5rem 1.5rem 0 0;padding:1.25rem;animation:slideUp .28s cubic-bezier(.2,.9,.3,1.2) both;max-height:90vh;overflow:auto}
+@media(min-width:768px){.modal-card{border-radius:1.5rem}}
+html.dark .modal-card{background:rgba(15,23,42,.92);border:1px solid rgba(51,65,85,.5)}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@media(min-width:768px){@keyframes slideUp{from{transform:translateY(20px) scale(.97);opacity:0}to{transform:none;opacity:1}}}
+.bottom-tab{position:fixed;bottom:0;left:0;right:0;z-index:60;padding:.5rem .75rem calc(.5rem + env(safe-area-inset-bottom)) .75rem;background:rgba(255,255,255,.85);backdrop-filter:blur(20px);border-top:1px solid rgba(148,163,184,.25);display:flex;justify-content:space-around}
+html.dark .bottom-tab{background:rgba(15,23,42,.85);border-top-color:rgba(51,65,85,.55)}
+.bottom-tab a{flex:1;display:flex;flex-direction:column;align-items:center;gap:.15rem;padding:.45rem 0;border-radius:.85rem;font-size:.65rem;font-weight:600;color:rgb(var(--c-muted));text-decoration:none}
+.bottom-tab a.active{color:#059669;background:rgba(16,185,129,.1)}
+html.dark .bottom-tab a.active{color:#34d399;background:rgba(16,185,129,.18)}
+.side-rail{display:none;position:sticky;top:5rem;flex-direction:column;gap:.4rem}
+@media(min-width:1024px){.side-rail{display:flex}}
+.side-rail a{display:flex;align-items:center;gap:.7rem;padding:.65rem .85rem;border-radius:.85rem;font-weight:500;color:rgb(var(--c-muted));text-decoration:none;font-size:.9rem;transition:background .15s ease,color .15s ease}
+.side-rail a:hover{background:rgba(148,163,184,.12);color:rgb(var(--c-ink))}
+.side-rail a.active{background:linear-gradient(135deg,rgba(16,185,129,.18),rgba(244,63,94,.10));color:#059669;font-weight:600}
+html.dark .side-rail a.active{color:#34d399;background:linear-gradient(135deg,rgba(16,185,129,.25),rgba(244,63,94,.12))}
+.brand-glow{position:relative}
+.brand-glow::before{content:"";position:absolute;inset:-3px;border-radius:14px;background:linear-gradient(135deg,#10b981,#f43f5e);filter:blur(8px);opacity:.35;z-index:-1}
+.fab{position:fixed;right:1rem;z-index:55;width:3.5rem;height:3.5rem;border-radius:9999px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#10b981,#059669);color:#fff;box-shadow:0 10px 30px rgba(16,185,129,.45);cursor:pointer;transition:transform .15s ease}
+.fab:hover{transform:scale(1.06)}
+.fab:active{transform:scale(.96)}
+@media(min-width:768px){.fab{bottom:1.5rem}.fab-mobile{bottom:5rem}}
+@media(max-width:767px){.fab{bottom:5rem}}
+.skeleton{background:linear-gradient(90deg,rgba(148,163,184,.15) 25%,rgba(148,163,184,.35) 50%,rgba(148,163,184,.15) 75%);background-size:200% 100%;animation:skel 1.4s ease-in-out infinite}
+@keyframes skel{from{background-position:200% 0}to{background-position:-200% 0}}
+</style>
+</head>
+<body>
+<div id="app" class="min-h-dvh"></div>
+<div id="modal-root"></div>
+<div id="toast-root" class="toast-wrap"></div>
+<script>
+window.__MIMO__={ready:false};
+</script>
+<script>
+/* ========= ICONS (lucide-style inline SVG) ========= */
+const ICONS = {
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>',
+  receipt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v18l3-2 3 2 3-2 3 2 3-2 3 2V4z"/><path d="M8 9h8M8 13h6"/></svg>',
+  plane:'<svg viewBox="3 3 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 16l20-7L2 9l4 5 4 1z"/></svg>',
+  chart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 6-7"/></svg>',
+  users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><circle cx="17" cy="9" r="2.6"/><path d="M21 19c0-2.4-2-4-4-4"/></svg>',
+  settings:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 0 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 0 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3 1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 0 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8 1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>',
+  x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+  sun:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>',
+  moon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>',
+  chevron:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>',
+  chevDown:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>',
+  trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>',
+  edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+  download:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>',
+  search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>',
+  filter:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18l-7 9v7l-4-2v-5z"/></svg>',
+  sparkle:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/></svg>',
+  piggy:'<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 38c0 8 8 14 18 14s18-6 18-14c0-3-1-5-3-7"/><path d="M10 30c0-9 9-16 22-16 4 0 7 1 10 2"/><circle cx="22" cy="26" r="2" fill="currentColor"/><path d="M50 26h4M32 52v6M40 52v6"/><path d="M52 36c2-1 4-3 4-6"/></svg>',
+  wallet:'<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="14" width="44" height="36" rx="6"/><path d="M50 24h8v18h-8"/><circle cx="54" cy="33" r="2.2" fill="currentColor"/><path d="M14 14V10a4 4 0 0 1 4-4h22"/></svg>',
+  globe:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>',
+  key:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M16 7l3 3"/></svg>',
+  copy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-11"/></svg>',
+  alert:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>',
+  logout:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>',
+  refresh:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/></svg>',
+  arrowUp:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14l5-5 5 5"/></svg>',
+  arrowDown:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10l5 5 5-5"/></svg>',
+  map:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 6 6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v16M15 6v16"/></svg>'
+};
+const ico=(k,cls='w-4 h-4')=>`<span class="inline-flex ${cls}" aria-hidden="true">${ICONS[k]}</span>`;
+
+/* ========= STORAGE LAYER ========= */
+const NS='mimo_';
+const store={
+  get(k,fb=null){try{const v=localStorage.getItem(NS+k);return v==null?fb:JSON.parse(v)}catch(e){return fb}},
+  set(k,v){try{localStorage.setItem(NS+k,JSON.stringify(v))}catch(e){}},
+  del(k){try{localStorage.removeItem(NS+k)}catch(e){}},
+  clear(){try{Object.keys(localStorage).filter(x=>x.startsWith(NS)).forEach(x=>localStorage.removeItem(x))}catch(e){}}
+};
+
+/* ========= UTILITIES ========= */
+const uid=(p='id')=>p+'_'+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-3);
+const fmtMoney=(n,c)=>{if(n==null||isNaN(n))return (0).toLocaleString();const s=(+n).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:2});return (c==='PHP'?'₱':c==='USD'?'$':c==='EUR'?'€':'')+s};
+const dateStr=(d)=>{const dt=(d instanceof Date)?d:new Date(d);return dt.toISOString().slice(0,10)};
+const todayStr=()=>dateStr(new Date());
+const monthKey=(d)=>dateStr(d).slice(0,7);
+const dayKey=(d)=>dateStr(d);
+const daysAgo=(n)=>{const d=new Date();d.setUTCHours(d.getUTCHours()+8);d.setUTCDate(d.getUTCDate()-n);return d};
+const daysFromNow=(n)=>{const d=new Date();d.setUTCHours(d.getUTCHours()+8);d.setUTCDate(d.getUTCDate()+n);return d};
+const formatHumanDate=(d)=>{const dt=(d instanceof Date)?d:new Date(d);return dt.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})};
+const escapeHtml=(s)=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const inviteCode=()=>Math.random().toString(36).slice(2,6).toUpperCase()+'-'+Math.random().toString(36).slice(2,6).toUpperCase();
+const initials=(n)=>(n||'?').trim().split(/\s+/).map(p=>p[0]).slice(0,2).join('').toUpperCase();
+const avatarBg=(id)=>{const colors=['#10b981','#f43f5e','#3b82f6','#8b5cf6','#f59e0b','#06b6d4','#ec4899','#84cc16'];let h=0;for(let i=0;i<(id||'').length;i++)h=(h*31+id.charCodeAt(i))>>>0;return colors[h%colors.length]};
+
+/* ========= CATEGORIES ========= */
+const CATEGORIES=[
+  {key:'food',label:'Food',color:'#f43f5e',icon:'🍔'},
+  {key:'transport',label:'Transport',color:'#3b82f6',icon:'🚗'},
+  {key:'shopping',label:'Shopping',color:'#8b5cf6',icon:'🛍️'},
+  {key:'bills',label:'Bills',color:'#f59e0b',icon:'💡'},
+  {key:'entertainment',label:'Entertainment',color:'#06b6d4',icon:'🎬'},
+  {key:'health',label:'Health',color:'#10b981',icon:'💊'},
+  {key:'travel',label:'Travel',color:'#ec4899',icon:'✈️'},
+  {key:'other',label:'Other',color:'#64748b',icon:'✨'}
+];
+const catMap=Object.fromEntries(CATEGORIES.map(c=>[c.key,c]));
+const TRIP_CATEGORIES=[
+  {key:'transport',label:'Transport',color:'#3b82f6'},
+  {key:'lodging',label:'Lodging',color:'#8b5cf6'},
+  {key:'food',label:'Food',color:'#f43f5e'},
+  {key:'activities',label:'Activities',color:'#f59e0b'},
+  {key:'misc',label:'Misc',color:'#64748b'}
+];
+const tripCatMap=Object.fromEntries(TRIP_CATEGORIES.map(c=>[c.key,c]));
+
+/* ========= ROLES & RBAC ========= */
+const ROLES={
+  owner:{label:'Owner',tier:4,chip:'chip-amber',desc:'Creator — full control of the circle.'},
+  admin:{label:'Admin',tier:3,chip:'chip-purple',desc:'Manage members, trips, budgets.'},
+  member:{label:'Member',tier:2,chip:'chip-emerald',desc:'Log expenses, view, join trips.'},
+  viewer:{label:'Viewer',tier:1,chip:'chip-slate',desc:'Read-only access.'}
+};
+const can={
+  view:(role)=>(ROLES[role]?.tier||0)>=1,
+  log:(role)=>(ROLES[role]?.tier||0)>=2,
+  manageTrips:(role)=>(ROLES[role]?.tier||0)>=3,
+  manageMembers:(role)=>(ROLES[role]?.tier||0)>=3,
+  manageBudget:(role)=>(ROLES[role]?.tier||0)>=3,
+  deleteCircle:(role)=>(ROLES[role]?.tier||0)>=4,
+  invite:(role)=>(ROLES[role]?.tier||0)>=3
+};
+
+/* ========= SEED DATA ========= */
+function seed(){
+  const users=[
+    {id:'u_alex',name:'Alex Reyes',handle:'@alex',role:'admin'},
+    {id:'u_mia',name:'Mia Cruz',handle:'@mia',role:'admin'},
+    {id:'u_junel',name:'Junel Santos',handle:'@junel',role:'member'},
+    {id:'u_sara',name:'Sara Lim',handle:'@sara',role:'member'},
+    {id:'u_bossing',name:'Bossing Tan',handle:'@bossing',role:'viewer'},
+    {id:'u_priya',name:'Priya Patel',handle:'@priya',role:'owner'}
+  ];
+  const familyCircle={
+    id:'c_family',name:'Family',emoji:'🏡',createdAt:daysAgo(40).toISOString(),
+    invite:'FAM-ILY-2026',currency:'PHP',
+    members:[
+      {userId:'u_alex',role:'owner',joinedAt:daysAgo(40).toISOString()},
+      {userId:'u_mia',role:'admin',joinedAt:daysAgo(38).toISOString()},
+      {userId:'u_junel',role:'member',joinedAt:daysAgo(35).toISOString()},
+      {userId:'u_sara',role:'member',joinedAt:daysAgo(33).toISOString()},
+      {userId:'u_bossing',role:'viewer',joinedAt:daysAgo(20).toISOString()}
+    ]
+  };
+  const travelCircle={
+    id:'c_travel',name:'Cool Travel Crew',emoji:'✈️',createdAt:daysAgo(60).toISOString(),
+    invite:'TRAV-EL-X24',currency:'PHP',
+    members:[
+      {userId:'u_priya',role:'owner',joinedAt:daysAgo(60).toISOString()},
+      {userId:'u_alex',role:'admin',joinedAt:daysAgo(58).toISOString()},
+      {userId:'u_mia',role:'member',joinedAt:daysAgo(55).toISOString()},
+      {userId:'u_junel',role:'member',joinedAt:daysAgo(50).toISOString()},
+      {userId:'u_sara',role:'member',joinedAt:daysAgo(48).toISOString()}
+    ]
+  };
+  const expenseSeeds=[
+    {days:1,amt:380,cat:'food',payer:'u_alex',note:'Groceries',cid:'c_family'},
+    {days:1,amt:120,cat:'transport',payer:'u_mia',note:'Grab to mall',cid:'c_family'},
+    {days:2,amt:2400,cat:'bills',payer:'u_alex',note:'Electric bill',cid:'c_family'},
+    {days:2,amt:520,cat:'food',payer:'u_junel',note:'Family dinner',cid:'c_family'},
+    {days:3,amt:850,cat:'shopping',payer:'u_sara',note:'School supplies',cid:'c_family'},
+    {days:4,amt:160,cat:'food',payer:'u_mia',note:'Lunch with mom',cid:'c_family'},
+    {days:5,amt:1200,cat:'entertainment',payer:'u_alex',note:'Netflix + Spotify',cid:'c_family'},
+    {days:5,amt:230,cat:'transport',payer:'u_sara',note:'Gas',cid:'c_family'},
+    {days:6,amt:75,cat:'food',payer:'u_bossing',note:'Coffee run',cid:'c_family'},
+    {days:7,amt:3400,cat:'health',payer:'u_alex',note:'Pharmacy + checkup',cid:'c_family'},
+    {days:8,amt:480,cat:'food',payer:'u_mia',note:'Sunday lunch',cid:'c_family'},
+    {days:9,amt:220,cat:'transport',payer:'u_junel',note:'Tricycle + jeep',cid:'c_family'},
+    {days:10,amt:1600,cat:'shopping',payer:'u_sara',note:'New sneakers',cid:'c_family'},
+    {days:11,amt:380,cat:'food',payer:'u_mia',note:'Brunch',cid:'c_family'},
+    {days:12,amt:1300,cat:'bills',payer:'u_alex',note:'Water + internet',cid:'c_family'},
+    {days:13,amt:240,cat:'entertainment',payer:'u_junel',note:'Cinema',cid:'c_family'},
+    {days:14,amt:90,cat:'transport',payer:'u_bossing',note:'Bus',cid:'c_family'},
+    {days:15,amt:620,cat:'food',payer:'u_alex',note:'Pizza night',cid:'c_family'},
+    {days:17,amt:180,cat:'food',payer:'u_mia',note:'Merienda',cid:'c_family'},
+    {days:18,amt:2100,cat:'travel',payer:'u_priya',note:'Airbnb deposit',cid:'c_travel'},
+    {days:20,amt:450,cat:'food',payer:'u_junel',note:'Baguio cafe',cid:'c_travel'},
+    {days:21,amt:890,cat:'transport',payer:'u_alex',note:'Van rental',cid:'c_travel'},
+    {days:23,amt:1200,cat:'food',payer:'u_mia',note:'Group dinner',cid:'c_travel'},
+    {days:25,amt:600,cat:'shopping',payer:'u_sara',note:'Sweater + souvenirs',cid:'c_travel'},
+    {days:27,amt:320,cat:'entertainment',payer:'u_priya',note:'Museum tickets',cid:'c_travel'}
+  ];
+  const expenses=expenseSeeds.map((e,i)=>({
+    id:'e_'+(1000+i),
+    circleId:e.cid,amount:e.amt,category:e.cat,
+    payer:e.payer,note:e.note,
+    date:dateStr(daysAgo(e.days)),
+    createdAt:daysAgo(e.days).toISOString(),
+    createdBy:e.payer
+  }));
+  const trips=[
+    {
+      id:'t_baguio',circleId:'c_travel',name:'Baguio Weekend',destination:'Baguio City',
+      startDate:dateStr(daysAgo(7)),endDate:dateStr(daysFromNow(2)),
+      budget:12000,currency:'PHP',
+      status:'active',
+      members:['u_priya','u_alex','u_mia','u_junel','u_sara'],
+      categories:[{key:'transport',amount:3200},{key:'lodging',amount:3500},{key:'food',amount:2800},{key:'activities',amount:1500},{key:'misc',amount:1000}],
+      expenses:[
+        {id:'te_1',amount:2400,cat:'transport',payer:'u_alex',note:'Van + fuel',date:dateStr(daysAgo(7))},
+        {id:'te_2',amount:3200,cat:'lodging',payer:'u_priya',note:'Airbnb 2 nights',date:dateStr(daysAgo(7))},
+        {id:'te_3',amount:480,cat:'food',payer:'u_mia',note:'Dinner Day 1',date:dateStr(daysAgo(7))},
+        {id:'te_4',amount:560,cat:'food',payer:'u_junel',note:'Lunch + dinner',date:dateStr(daysAgo(6))},
+        {id:'te_5',amount:720,cat:'food',payer:'u_sara',note:'Strawberry farm + snacks',date:dateStr(daysAgo(6))},
+        {id:'te_6',amount:480,cat:'activities',payer:'u_alex',note:'Burnham Park',date:dateStr(daysAgo(5))},
+        {id:'te_7',amount:600,cat:'misc',payer:'u_priya',note:'Souvenirs',date:dateStr(daysAgo(5))},
+        {id:'te_8',amount:240,cat:'transport',payer:'u_mia',note:'Tricycle tours',date:dateStr(daysAgo(5))}
+      ]
+    },
+    {
+      id:'t_siar',circleId:'c_travel',name:'Manila to Siargao',destination:'Siargao Island',
+      startDate:dateStr(daysFromNow(14)),endDate:dateStr(daysFromNow(20)),
+      budget:28000,currency:'PHP',
+      status:'planned',
+      members:['u_priya','u_alex','u_mia','u_sara'],
+      categories:[{key:'transport',amount:9000},{key:'lodging',amount:9500},{key:'food',amount:5000},{key:'activities',amount:3500},{key:'misc',amount:1000}],
+      expenses:[]
+    }
+  ];
+  return {users,circles:[familyCircle,travelCircle],expenses,trips};
+}
+
+/* ========= STATE ========= */
+let STATE={
+  users:[],circles:[],expenses:[],trips:[],
+  currentUserId:null,currentCircleId:null,
+  settings:{theme:'light',currency:'PHP'},
+  loaded:false
+};
+function loadState(){
+  const stored=store.get('state',null);
+  if(stored && stored.users && stored.circles){
+    STATE=Object.assign(STATE,stored);
+  } else {
+    const seedData=seed();
+    STATE.users=seedData.users;
+    STATE.circles=seedData.circles;
+    STATE.expenses=seedData.expenses;
+    STATE.trips=seedData.trips;
+    if(!STATE.currentUserId) STATE.currentUserId='u_alex';
+    if(!STATE.currentCircleId) STATE.currentCircleId='c_family';
+  }
+  const sets=store.get('settings',null);
+  if(sets) STATE.settings=Object.assign(STATE.settings,sets);
+  STATE.loaded=true;
+}
+function saveState(){
+  store.set('state',{
+    users:STATE.users,circles:STATE.circles,expenses:STATE.expenses,trips:STATE.trips,
+    currentUserId:STATE.currentUserId,currentCircleId:STATE.currentCircleId
+  });
+}
+function saveSettings(){store.set('settings',STATE.settings)}
+
+/* ========= SELECTORS ========= */
+function currentUser(){return STATE.users.find(u=>u.id===STATE.currentUserId)}
+function currentCircle(){return STATE.circles.find(c=>c.id===STATE.currentCircleId)}
+function userById(id){return STATE.users.find(u=>u.id===id)}
+function circleById(id){return STATE.circles.find(c=>c.id===id)}
+function myRole(circleId,userId){
+  const c=circleById(circleId);if(!c) return null;
+  const m=c.members.find(x=>x.userId===userId);return m?m.role:null;
+}
+function memberRoleIn(circle,userId){const m=circle.members.find(x=>x.userId===userId);return m?m.role:null}
+function circleMemberUsers(circleId){
+  const c=circleById(circleId);if(!c) return [];
+  return c.members.map(m=>Object.assign({},userById(m.userId),{role:m.role,joinedAt:m.joinedAt})).filter(Boolean);
+}
+function expensesForCurrentCircle(){
+  return STATE.expenses.filter(e=>e.circleId===STATE.currentCircleId).sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt||'').localeCompare(a.createdAt||''));
+}
+function tripsForCurrentCircle(){
+  return STATE.trips.filter(t=>t.circleId===STATE.currentCircleId);
+}
+/* ========= TOAST SYSTEM ========= */
+function toast(msg,type='emerald',ms=2800){
+  const root=document.getElementById('toast-root');
+  const t=document.createElement('div');
+  t.className='toast toast-'+type;
+  t.textContent=msg;
+  root.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),320)},ms);
+}
+const notifySuccess=(m)=>toast(m,'emerald');
+const notifyError=(m)=>toast(m,'rose');
+const notifyInfo=(m)=>toast(m,'slate');
+
+/* ========= CSV EXPORT ========= */
+function downloadBlob(filename,text,mime='text/csv'){
+  const blob=new Blob(['\ufeff'+text],{type:mime+';charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=filename;
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url)},100);
+}
+function escCSV(v){const s=String(v==null?'':v);if(/[",\n]/.test(s))return '"'+s.replace(/"/g,'""')+'"';return s}
+function exportExpensesCSV(){
+  const rows=[['Date','Circle','Category','Amount','Payer','Note']];
+  STATE.expenses.forEach(e=>{
+    const payer=userById(e.payer);
+    rows.push([dateStr(e.date),circleById(e.circleId)?.name||'',catMap[e.category]?.label||e.category,String(e.amount),payer?payer.name:'',e.note||'']);
+  });
+  downloadBlob('mimo-expenses.csv',rows.map(r=>r.map(escCSV).join(',')).join('\n'));
+  notifySuccess('Expenses exported to CSV');
+}
+function exportTripsCSV(){
+  const rows=[['Trip','Circle','Destination','Budget','Spent','Remaining','Status']];
+  STATE.trips.forEach(t=>{
+    const spent=tripSpent(t);
+    rows.push([t.name,circleById(t.circleId)?.name||'',t.destination,String(t.budget),String(spent),String(t.budget-spent),t.status]);
+  });
+  downloadBlob('mimo-trips.csv',rows.map(r=>r.map(escCSV).join(',')).join('\n'));
+  notifySuccess('Trips exported to CSV');
+}
+function tripSpent(t){
+  if(!t||!t.expenses) return 0;
+  return t.expenses.reduce((s,e)=>s+Number(e.amount||0),0);
+}
+function tripCatBudget(t,key){const c=(t.categories||[]).find(x=>x.key===key);return c?Number(c.amount||0):0}
+function tripCatSpent(t,key){return (t.expenses||[]).filter(e=>e.cat===key).reduce((s,e)=>s+Number(e.amount||0),0)}
+function tripOverall(t){const b=(t.categories||[]).reduce((s,c)=>s+Number(c.amount||0),0);return {budget:b||t.budget||0,spent:tripSpent(t)}}
+function tripMembersList(circleId){return STATE.expenses}
+
+/* ========= NAV & LAYOUT ========= */
+const PAGES=[
+  {id:'dashboard',label:'Dashboard',icon:'home'},
+  {id:'expenses',label:'Expenses',icon:'receipt'},
+  {id:'trips',label:'Trips',icon:'plane'},
+  {id:'analytics',label:'Analytics',icon:'chart'},
+  {id:'circles',label:'Circles',icon:'users'},
+  {id:'settings',label:'Settings',icon:'settings'}
+];
+function brandMark(){
+  return `<a href="#/dashboard" class="flex items-center gap-2.5 text-lg sm:text-xl font-extrabold brand-mark">`+
+    `<span class="w-9 h-9 rounded-2xl gradient-emerald shadow-lg shadow-emerald-500/30 flex items-center justify-center text-white shrink-0">`+
+    `<svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5h12a4 4 0 0 1 0 8H8a3 3 0 0 0 0 6h13"/><path d="M21 9.5V6"/><path d="M18 6l3 0 0 3"/></svg>`+
+    `</span>`+
+    `<span class="leading-none tracking-slim"><span class="cursive gradient-text">MIMO</span><span class="text-[0.6rem] font-bold text-muted tracking-widest block mt-0.5 text-slate-400 dark:text-slate-500">MONEY IN · MONEY OUT</span></span>`+
+    `</a>`;
+}
+function userChip(){
+  const u=currentUser();
+  if(!u) return '';
+  return `<button onclick="openUserSwitcher()" class="flex items-center gap-2 rounded-full p-1 pr-2 pl-1 glass hover:shadow-soft transition-shadow cursor-pointer" title="Switch user (${u.name})">`+
+    `<span class="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style="background:${avatarBg(u.id)}">${initials(u.name)}</span>`+
+    `<span class="text-xs font-semibold hidden sm:block">${escapeHtml(u.name.split(' ')[0])}</span>`+
+    `<span class="text-slate-400 dark:text-slate-500 hidden sm:block">${ico('chevDown','w-3.5 h-3.5')}</span></button>`;
+}
+function circleChip(){
+  const c=currentCircle();
+  if(!c) return '';
+  const role=myRole(c.id,STATE.currentUserId);
+  return `<button onclick="openCircleSwitcher()" class="flex items-center gap-1.5 rounded-full px-2.5 py-1 glass hover:shadow-soft transition-shadow cursor-pointer text-xs" >`+
+    `<span>${c.emoji||'🏠'}</span><span class="font-semibold">${escapeHtml(c.name)}</span>`+
+    ` ${role?`<span class="chip ${ROLES[role].chip} !px-1.5 !py-0 !text-[0.6rem]">${ROLES[role].label}</span>`:''}`+
+    `<span class="text-slate-400 dark:text-slate-500">${ico('chevDown','w-3 h-3')}</span></button>`;
+}
+function navLinks(active){
+  return `<nav class="hidden md:flex items-center gap-1">`+PAGES.map(p=>{
+    const a=p.id===active;
+    return `<a href="#/${p.id}" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium transition-colors ${a?'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400':'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}">`+
+      ico(p.icon,'w-4 h-4')+p.label+`</a>`;
+  }).join('')+`</nav>`;
+}
+function sideRail(active){
+  return `<nav class="side-rail">`+PAGES.map(p=>{
+    const a=p.id===active;
+    return `<a href="#/${p.id}" class="${a?'active':''}">${ico(p.icon,'w-5 h-5')}<span>${p.label}</span></a>`;
+  }).join('')+`</nav>`;
+}
+function bottomTabs(active){
+  const tabs=PAGES.filter(p=>p.id!=='settings');
+  return `<nav class="bottom-tab md:hidden">`+tabs.map(p=>{
+    const a=p.id===active;
+    return `<a href="#/${p.id}" class="${a?'active':''}">${ico(p.icon,'w-5 h-5')}<span>${p.label}</span></a>`;
+  }).join('')+`<a href="#/settings" class="${active==='settings'?'active':''}">${ico('settings','w-5 h-5')}<span>Settings</span></a>`+`</nav>`;
+}
+function renderLayout(active){
+  const app=document.getElementById('app');
+  app.innerHTML=`
+    <header class="sticky top-0 z-50 glass-strong backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/40">
+      <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+        ${brandMark()}
+        ${navLinks(active)}
+        <div class="flex items-center gap-2 ml-auto">
+          ${themeToggle()}
+          ${circleChip()}
+          ${userChip()}
+        </div>
+      </div>
+    </header>
+    <main class="max-w-6xl mx-auto px-4 pt-5 pb-28 md:pb-12 flex gap-6">
+      <div class="hidden md:block w-48 shrink-0">${sideRail(active)}</div>
+      <div id="page" class="flex-1 min-w-0 fade-in"></div>
+    </main>
+    ${bottomTabs(active)}
+  `;
+  renderPage(active);
+}
+function themeToggle(){
+  const dark=document.documentElement.classList.contains('dark');
+  return `<button onclick="toggleTheme()" class="w-9 h-9 rounded-xl glass flex items-center justify-center text-slate-500 dark:text-slate-300 hover:text-emerald-500 transition-colors" title="Toggle theme">`+
+    (dark?ico('sun','w-4.5 h-4.5'):ico('moon','w-4.5 h-4.5'))+`</button>`;
+}
+function toggleTheme(){
+  const el=document.documentElement;
+  const dark=el.classList.toggle('dark');
+  STATE.settings.theme=dark?'dark':'light';
+  saveSettings();
+  renderLayout(currentRoute());
+}
+function setThemeMode(t){
+  const dark=t==='dark';
+  document.documentElement.classList.toggle('dark',dark);
+  STATE.settings.theme=t;saveSettings();
+}
+
+/* ========= ROUTER ========= */
+const ROUTES={
+  'dashboard':renderDashboard,
+  'expenses':renderExpenses,
+  'trips':renderTrips,
+  'analytics':renderAnalytics,
+  'circles':renderCircles,
+  'settings':renderSettings
+};
+function currentRoute(){
+  const h=location.hash.replace(/^#\//,'')||'dashboard';
+  const clean=h.split('?')[0];
+  return ROUTES[clean]?clean:'dashboard';
+}
+function renderPage(route){
+  const page=document.getElementById('page');
+  const fn=ROUTES[route]||renderDashboard;
+  fn(page);
+}
+function route(){
+  if(!STATE.loaded) loadState();
+  const r=currentRoute();
+  renderLayout(r);
+  window.scrollTo({top:0});
+}
+const routeLink=(href,label,icon,cls='')=>`<a href="#/${href}" class="text-emerald-600 dark:text-emerald-400 font-semibold hover:underline ${cls}">${ICONS[icon]?'':''}${label}</a>`;
+
+/* ========= DASHBOARD ========= */
+function statCounter(el,target,opts={}){
+  if(!el) return;
+  const dur=opts.dur||900;const start=performance.now();const from=opts.from||0;
+  function frame(t){
+    const p=Math.min(1,(t-start)/dur);
+    const eased=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+    const val=from+(target-from)*eased;
+    el.textContent=opts.dollars!=null?fmtMoney(val,opts.dollars):Math.round(val).toLocaleString();
+    if(p<1)requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+function renderDashboard(page){
+  const c=currentCircle();if(!c){page.innerHTML=emptyState();return}
+  const cur=STATE.currentUserId;
+  const role=myRole(c.id,cur);
+  const exps=expensesForCurrentCircle();
+  const now=daysAgo(0);const curM=monthKey(now);
+  const thisMonth=[];
+  const last30=[];
+  for(let i=0;i<30;i++){const d=dateStr(daysAgo(i));last30.push(d)}
+  const last30set=new Set(last30);
+  exps.forEach(e=>{
+    const dk=dateStr(e.date);
+    if(monthKey(new Date(dk+'T00:00:00Z'))===curM) thisMonth.push(e);
+    if(last30set.has(dk)) {e.__in30=true}else{e.__in30=false}
+  });
+  const curMonthSpend=thisMonth.reduce((s,e)=>s+e.amount,0);
+  const last30Spend=exps.filter(e=>e.__in30).reduce((s,e)=>s+e.amount,0);
+  const daysIn=new Set(thisMonth.map(e=>dateStr(e.date))).size;
+  const avgDaily=daysIn>(0)?Math.round(curMonthSpend/Math.max(1,daysIn)):0;
+  const catTotals={};let topCat=null;
+  exps.forEach(e=>{catTotals[e.category]=(catTotals[e.category]||0)+e.amount});
+  const catArr=Object.entries(catTotals).sort((a,b)=>b[1]-a[1]);
+  if(catArr.length) topCat=catArr[0];
+  const memberTotals={};exps.forEach(e=>{memberTotals[e.payer]=(memberTotals[e.payer]||0)+e.amount});
+  const mArr=Object.entries(memberTotals).sort((a,b)=>b[1]-a[1]);
+  const topMember=mArr[0]?userById(mArr[0][0]):null;
+  const tripTot=tripOverall(tripsForCurrentCircle()[0]||{categories:[]});
+  const tripPct=tripTot.budget>0?Math.min(100,Math.round(tripTot.spent/tripTot.budget*100)):0;
+  const currency=STATE.settings.currency;
+  const greet=hourGreeting();
+
+  page.innerHTML=`
+    <div class="space-y-5">
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">${greet}, ${escapeHtml(currentUser().name.split(' ')[0])} 👋</p>
+          <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">${c.emoji} ${escapeHtml(c.name)}</h1>
+        </div>
+        <div class="flex gap-2">
+          <button class="btn btn-outline text-xs" onclick="openCircleSwitcher()">${ico('users','w-4 h-4')} Switch circle</button>
+          ${can.log(role)?`<button class="btn btn-emerald text-sm" onclick="openAddExpense()">${ico('plus','w-4 h-4')} Add expense</button>`:''}
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        ${kpiTile(curMonthSpend,'This month',currency,'gradient-emerald','arrowDown','This month')}
+        ${kpiTile(avgDaily,'Avg daily',currency,'gradient-blue','chart','Daily avg','/day')}
+        ${kpiTile(topCat?catTotals[topCat[0]]:0,'Top category',currency,'gradient-amber','sparkle',topCat?catMap[topCat[0]]?.label:null)}
+        ${kpiTile(topMember?memberTotals[topMember.id]:0,'Top member',currency,'gradient-rose','users',topMember?topMember.name.split(' ')[0]:null)}
+      </div>
+
+      <div class="glass rounded-3xl p-5 lift">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-bold text-sm">Last 30 days</h2>
+          <span class="chip chip-emerald">${last30Spend.toLocaleString()}${currency==='PHP'?'₱':''} total</span>
+        </div>
+        <canvas id="dashBar" height="110"></canvas>
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-4 text-center">
+          <div class="rounded-2xl bg-slate-500/5 p-2.5"><p class="text-[0.65rem] font-semibold text-slate-500 uppercase">Trip progress</p><p class="text-lg font-bold">${tripPct}%</p></div>
+          <div class="rounded-2xl bg-slate-500/5 p-2.5 col-span-1"><p class="text-[0.65rem] font-semibold text-slate-500 uppercase">Expenses</p><p class="text-lg font-bold">${exps.length}</p></div>
+          <div class="rounded-2xl bg-slate-500/5 p-2.5 col-span-2 sm:col-span-3"><p class="text-[0.65rem] font-semibold text-slate-500 uppercase">Ongoing trip</p><p class="text-sm font-semibold truncate">${tripsForCurrentCircle().filter(t=>t.status==='active').map(t=>escapeHtml(t.name)).join(', ')||'None active'}</p></div>
+        </div>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-3">
+        <div class="glass rounded-3xl p-5 lift">
+          <div class="flex items-center justify-between mb-3"><h2 class="font-bold text-sm">Recent spending</h2><a href="#/expenses" class="text-emerald-600 dark:text-emerald-400 text-xs font-semibold">View all</a></div>
+          <div class="space-y-1">${expenseRows(exps.slice(0,4))||emptyInline('No expenses yet', 'card')}</div>
+        </div>
+        <div class="glass rounded-3xl p-5 lift">
+          <div class="flex items-center justify-between mb-3"><h2 class="font-bold text-sm">Upcoming trips</h2><a href="#/trips" class="text-emerald-600 dark:text-emerald-400 text-xs font-semibold">All trips</a></div>
+          <div class="space-y-2">${tripRows(tripsForCurrentCircle().slice(0,2))||emptyInline('No trips yet','plane')}</div>
+        </div>
+      </div>
+    </div>`;
+  drawDailyBar('dashBar');
+  setTimeout(()=>{
+    const nums=page.querySelectorAll('[data-count]');
+    const vals=[curMonthSpend,avgDaily,topCat?catTotals[topCat[0]]:0,topMember?memberTotals[topMember.id]:0];
+    nums.forEach((el,i)=>statCounter(el,vals[i]||0,{dollars:currency,dur:900}));
+  },50);
+}
+function hourGreeting(){const h=new Date().getHours();if(h<12)return 'Good morning';if(h<17)return 'Good afternoon';return 'Good evening'}
+function kpiTile(val,label,currency,grad,icon,sub,subfix){
+  return `<div class="glass rounded-3xl p-4 lift relative overflow-hidden">
+    <div class="absolute -right-6 -top-6 w-24 h-24 rounded-full ${grad} opacity-10"></div>
+    <div class="flex items-center gap-2 mb-2"><span class="w-7 h-7 rounded-lg ${grad} text-white flex items-center justify-center">${ico(icon,'w-4 h-4')}</span><span class="text-xs font-semibold text-slate-500 uppercase">${escapeHtml(label)}</span></div>
+    <div class="kpi-num text-xl sm:text-2xl" data-count>0</div>
+    ${sub?`<p class="text-[0.7rem] font-medium text-slate-400 mt-1">${escapeHtml(sub)}${subfix?' '+escapeHtml(subfix):''}</p>`:''}
+  </div>`;
+}
+function expenseRows(exps){
+  if(!exps.length)return '';
+  const currency=STATE.settings.currency;
+  return exps.map(e=>{
+    const cat=catMap[e.category]||{label:e.category,color:'#64748b',icon:'✨'};
+    const payer=userById(e.payer);
+    return `<div class="group flex items-center gap-3 p-2.5 rounded-2xl hover:bg-slate-500/5 transition-colors">
+      <span class="w-10 h-10 rounded-2xl flex items-center justify-center text-lg shrink-0" style="background:${cat.color}1a">${cat.icon}</span>
+      <div class="flex-1 min-w-0">
+        <p class="font-semibold text-sm truncate">${escapeHtml(cat.label)}${e.note?' <span class="text-slate-400 font-normal">· '+escapeHtml(e.note)+'</span>':''}</p>
+        <p class="text-xs text-slate-400">${escapeHtml(payer?payer.name:'Unknown')} · ${formatHumanDate(new Date(e.date+'T00:00:00Z'))}</p>
+      </div>
+      <div class="text-right shrink-0">
+        <p class="font-bold tabular text-sm text-rose-500 dark:text-rose-400">-${fmtMoney(e.amount,currency)}</p>
+        ${can.remove?``:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function tripRows(trips){
+  if(!trips.length)return '';
+  return trips.map(t=>{
+    const total=tripOverall(t);
+    const pct=total.budget>0?Math.min(100,Math.round(total.spent/total.budget*100)):0;
+    const active=t.status==='active';
+    return `<a href="#/trips" class="block group p-3 rounded-2xl hover:bg-slate-500/5 transition-colors">
+      <div class="flex items-center gap-3">
+        <span class="w-10 h-10 rounded-2xl gradient-blue text-white flex items-center justify-center shrink-0">${ico('plane','w-5 h-5')}</span>
+        <div class="flex-1 min-w-0">
+          <p class="font-semibold text-sm truncate">${escapeHtml(t.name)}</p>
+          <p class="text-xs text-slate-400 truncate">${escapeHtml(t.destination)}</p>
+        </div>
+        <span class="chip ${active?'chip-emerald':'chip-slate'}">${active?'Active':'Planned'}</span>
+      </div>
+      <div class="progress mt-2"><div class="progress-bar ${active?'gradient-emerald':'bg-slate-300 dark:bg-slate-600'}" style="width:${pct}%"></div></div>
+      <p class="text-[0.7rem] text-slate-400 mt-1">${pct}% · ${fmtMoney(total.spent,STATE.settings.currency)} spent</p>
+    </a>`;
+  }).join('');
+}
+function emptyInline(msg,icon){
+  return `<div class="flex flex-col items-center justify-center py-6 text-center gap-2">
+    <span class="w-12 h-12 rounded-2xl bg-slate-500/10 text-slate-400 flex items-center justify-center">${ico(icon||'piggy','w-6 h-6')}</span>
+    <p class="text-sm text-slate-400">${escapeHtml(msg)}</p>
+  </div>`;
+}
+function emptyState(msg){
+  return `<div class="glass rounded-3xl p-10 flex flex-col items-center justify-center text-center gap-3">
+    <svg viewBox="0 0 64 64" class="w-20 h-20 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 38c0 8 8 14 18 14s18-6 18-14c0-3-1-5-3-7"/><path d="M10 30c0-9 9-16 22-16 4 0 7 1 10 2"/><circle cx="22" cy="26" r="3" fill="currentColor"/><path d="M50 26h4M32 52v6M40 52v6"/><path d="M52 36c2-1 4-3 4-6"/></svg>
+    <h3 class="font-bold text-lg">${escapeHtml(msg||'Nothing here yet')}</h3>
+    <p class="text-sm text-slate-400 max-w-xs">Start by ${can.log(myRole(STATE.currentCircleId,STATE.currentUserId))?'adding an expense or join a circle.':'joining a circle to see activity.'}</p>
+    <div class="flex gap-2">${can.log(myRole(STATE.currentCircleId,STATE.currentUserId))?`<button class="btn btn-emerald" onclick="openAddExpense()">${ico('plus','w-4 h-4')} Add expense</button>`:''}<button class="btn btn-outline" onclick="openCircleSwitcher()">Switch circle</button></div>
+  </div>`;
+}
+function renderExpenses(page){
+  const role=myRole(STATE.currentCircleId,STATE.currentUserId);
+  const exps=expensesForCurrentCircle();
+  const currency=STATE.settings.currency;
+  const total=exps.reduce((s,e)=>s+e.amount,0);
+  const cats={};STATE.expenses.filter(e=>e.circleId===STATE.currentCircleId).forEach(e=>{cats[e.category]=(cats[e.category]||0)+e.amount});
+  const catArr=Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+
+  page.innerHTML=`
+    <div class="space-y-5">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div><p class="text-slate-500 text-sm font-medium">All recorded spending</p><h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Expenses</h1></div>
+        <div class="flex gap-2">
+          <button class="btn btn-outline text-xs" onclick="openFilterExpenses()">${ico('filter','w-4 h-4')} Filter</button>
+          <button class="btn btn-ghost text-xs" onclick="exportExpensesCSV()">${ico('download','w-4 h-4')} CSV</button>
+          ${can.log(role)?`<button class="btn btn-emerald text-sm" onclick="openAddExpense()">${ico('plus','w-4 h-4')} Add</button>`:''}
+        </div>
+      </div>
+
+      <div class="glass rounded-3xl p-5 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p class="text-xs font-semibold text-slate-500 uppercase mb-1">Total this circle</p>
+          <p class="kpi-num text-3xl text-rose-500 dark:text-rose-400">-${fmtMoney(total,currency)}</p>
+        </div>
+        <div class="flex flex-wrap gap-2 max-w-md">${catArr.slice(0,6).map(([k,v])=>`<span class="chip" style="background:${(catMap[k]||{}).color}1a;color:${(catMap[k]||{}).color}">${(catMap[k]||{icon:'✨'}).icon} ${(catMap[k]||{label:k}).label}</span>`).join('')}</div>
+      </div>
+
+      <div class="glass rounded-3xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-bold text-sm">All expenses <span class="chip chip-slate ml-1">${exps.length}</span></h2>
+          <div class="flex gap-1.5 no-scrollbar overflow-x-auto">${['all','food','transport','shopping','bills','entertainment','health','travel','other'].map(c=>`<button onclick="filterExpenses('${c}')" data-fcat="${c}" class="chip chip-slate ${c==='all'?'!bg-emerald-500/15 !text-emerald-600':''} whitespace-nowrap">${c==='all'?'All':(catMap[c]||{label:c}).label}</button>`).join('')}</div>
+        </div>
+        <div id="exp-list" class="space-y-0.5">${expenseRows(exps)}</div>
+        ${exps.length?`<div class="divider my-4"></div><p class="text-xs text-slate-400 text-center">Showing all ${exps.length} expenses</p>`:''}
+      </div>
+    </div>`;
+  if(!exps.length) page.innerHTML+='';
+}
+let expFilterState='all';
+function filterExpenses(cat){
+  expFilterState=cat;
+  const exps=expensesForCurrentCircle().filter(e=>cat==='all'||e.category===cat);
+  const list=document.getElementById('exp-list');
+  if(list) list.innerHTML=expenseRows(exps)||`<div class="text-center text-sm text-slate-400 py-8">No expenses in this category.</div>`;
+  document.querySelectorAll('[data-fcat]').forEach(b=>{const on=b.getAttribute('data-fcat')===cat;b.className='chip chip-slate whitespace-nowrap'+(on?' !bg-emerald-500/15 !text-emerald-600':'')});
+}
+function openFilterExpenses(){
+  const role=myRole(STATE.currentCircleId,STATE.currentUserId);
+  const exps=expensesForCurrentCircle();
+  const currentM=monthKey(new Date());
+  const inM=exps.filter(e=>monthKey(new Date(e.date))===currentM).reduce((s,e)=>s+e.amount,0);
+  const within7=exps.filter(e=>dateStr(new Date(e.date))>=dateStr(daysAgo(7))).reduce((s,e)=>s+e.amount,0);
+  const modal=document.createElement('div');modal.className='modal-backdrop';
+  modal.innerHTML=`
+    <div class="modal-card">
+      <div class="flex items-center justify-between mb-4"><h3 class="font-bold text-lg">Quick insights</h3><button onclick="closeModal()" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">${ico('x','w-5 h-5')}</button></div>
+      <div class="grid grid-cols-3 gap-2 mb-4">
+        <div class="bg-slate-500/5 rounded-2xl p-3 text-center"><p class="text-[0.62rem] text-slate-500 uppercase font-semibold">This month</p><p class="font-bold text-sm text-rose-500 tabular">${fmtMoney(inM,STATE.settings.currency)}</p></div>
+        <div class="bg-slate-500/5 rounded-2xl p-3 text-center"><p class="text-[0.62rem] text-slate-500 uppercase font-semibold">Last 7 days</p><p class="font-bold text-sm text-rose-500 tabular">${fmtMoney(within7,STATE.settings.currency)}</p></div>
+        <div class="bg-slate-500/5 rounded-2xl p-3 text-center"><p class="text-[0.62rem] text-slate-500 uppercase font-semibold">Total</p><p class="font-bold text-sm text-rose-500 tabular">${fmtMoney(exps.reduce((s,e)=>s+e.amount,0),STATE.settings.currency)}</p></div>
+      </div>
+      <p class="label">Filter by category</p>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        ${CATEGORIES.map(c=>`<button onclick="filterExpenses('${c.key}');closeModal()" class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-emerald-400 transition-colors text-left">
+          <span class="w-7 h-7 rounded-lg flex items-center justify-center text-sm" style="background:${c.color}1a">${c.icon}</span><span class="text-xs font-semibold">${c.label}</span></button>`).join('')}
+      </div>
+    </div>`;
+  const mr=document.getElementById('modal-root');mr.innerHTML='';mr.appendChild(modal);
+  modal.addEventListener('click',e=>{if(e.target===modal)closeModal()});
+}
+
+/* ========= TRIPS PAGE ========= */
+function renderTrips(page){
+  const role=myRole(STATE.currentCircleId,STATE.currentUserId);
+  const trips=tripsForCurrentCircle();
+  const currency=STATE.settings.currency;
+  const active=trips.filter(t=>t.status==='active');
+  const planned=trips.filter(t=>t.status==='planned');
+  page.innerHTML=`
+    <div class="space-y-5">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div><p class="text-slate-500 text-sm font-medium">Group travel & budgets</p><h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Trips</h1></div>
+        <div class="flex gap-2">
+          <button class="btn btn-ghost text-xs" onclick="exportTripsCSV()">${ico('download','w-4 h-4')} CSV</button>
+          ${can.manageTrips(role)?`<button class="btn btn-emerald text-sm" onclick="openAddTrip()">${ico('plus','w-4 h-4')} New trip</button>`:''}
+        </div>
+      </div>
+
+      ${active.length?`<div>
+        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Active</h2>
+        <div class="grid sm:grid-cols-2 gap-3">${active.map(tripCard).join('')}</div>
+      </div>`:''}
+      ${planned.length?`<div>
+        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2 mt-4">Planned</h2>
+        <div class="grid sm:grid-cols-2 gap-3">${planned.map(tripCard).join('')}</div>
+      </div>`:''}
+      ${!trips.length?`<div class="glass rounded-3xl p-10 text-center">${bigEmpty('plane')}<h3 class="font-bold text-lg mt-2">No trips yet</h3><p class="text-sm text-slate-400 my-2">${can.manageTrips(role)?'Plan a group adventure with a shared budget.':'Your circle has no trips yet.'}</p>${can.manageTrips(role)?`<button class="btn btn-emerald" onclick="openAddTrip()">${ico('plus','w-4 h-4')} New trip</button>`:''}</div>`:''}
+    </div>`;
+}
+function tripCard(t){
+  const c=circleById(t.circleId);
+  const currency=STATE.settings.currency;
+  const total=tripOverall(t);
+  const spent=total.spent;const budget=total.budget;
+  const pct=budget>0?Math.min(100,Math.round(spent/budget*100)):0;
+  const active=t.status==='active';
+  const memberSet=new Set(t.members);
+  const participants=c?c.members.filter(m=>memberSet.has(m.userId)).map(m=>userById(m.userId)).filter(Boolean):[];
+  return `<div class="glass rounded-3xl overflow-hidden lift group cursor-pointer" onclick="openTripDetail('${t.id}')">
+    <div class="relative h-24 ${active?'gradient-blue':'gradient-slate bg-slate-400 dark:bg-slate-700'} overflow-hidden">
+      <div class="absolute inset-0 opacity-20" style="background:radial-gradient(60% 100% at 20% 0%,#fff,transparent)"></div>
+      ${ico('plane','w-8 h-8 text-white/80 absolute right-4 top-4')}
+      <div class="absolute bottom-3 left-4 right-4 flex items-end justify-between">
+        <div>
+          <h3 class="text-white font-bold text-lg leading-tight drop-shadow">${escapeHtml(t.name)}</h3>
+          <p class="text-white/85 text-xs font-medium">${escapeHtml(t.destination)} · ${formatHumanDate(new Date(t.startDate+'T00:00:00Z'))}</p>
+        </div>
+        <span class="chip ${active?'chip-emerald':'chip-slate'} !bg-white/25 !text-white">${active?'● Active':'○ Planned'}</span>
+      </div>
+    </div>
+    <div class="p-4 space-y-3">
+      <div class="flex items-center justify-between text-sm">
+        <span class="text-slate-400 font-medium">Spent so far</span>
+        <span class="font-bold tabular ${budget>0&&pct>=100?'text-rose-500':''}">${fmtMoney(spent,currency)}<span class="text-slate-400 font-normal text-xs"> / ${fmtMoney(budget,currency)}</span></span>
+      </div>
+      <div class="progress h-2"><div class="progress-bar ${active?'gradient-emerald':(budget>0?'gradient-blue':'bg-slate-300')}" style="width:${pct}%"></div></div>
+      <div class="flex items-center justify-between text-[0.7rem] text-slate-400">
+        <span>${pct}% of budget · ${fmtMoney(Math.max(0,budget-spent),currency)} left</span>
+        <span class="flex -space-x-1.5">${participants.slice(0,5).map(u=>`<span class="w-5 h-5 rounded-full ring-2 ring-white dark:ring-slate-800 text-[0.5rem] text-white font-bold flex items-center justify-center" style="background:${avatarBg(u.id)}">${initials(u.name)}</span>`).join('')}</span>
+      </div>
+      <div class="flex flex-wrap gap-1.5 pt-1">${(t.categories||[]).map(cc=>{const tc=tripCatMap[cc.key]||{label:cc.key};const cs=tripCatSpent(t,cc.key);const cp=cc.amount>0?Math.min(100,Math.round(cs/cc.amount*100)):0;return `<span class="chip chip-slate !text-[0.62rem]"><span class="w-1.5 h-1.5 rounded-full" style="background:${tc.color}"></span>${tc.label} ${cp>=100?'<span class="text-rose-500 font-bold">✓</span>':'<span>'+cp+'%</span>'}</span>`}).join('')}</div>
+    </div>
+  </div>`;
+}
+function bigEmpty(icon){
+  return `<span class="inline-flex w-16 h-16 rounded-3xl bg-slate-500/10 text-slate-400 items-center justify-center">${ico(icon,'w-8 h-8')}</span>`;
+}
+
+/* ========= ANALYTICS CHARTS ========= */
+let charts={};
+function destroyCharts(){
+  Object.values(charts).forEach(c=>{try{c.destroy()}catch(e){}});
+  charts={};
+}
+function chartTheme(){
+  const dark=document.documentElement.classList.contains('dark');
+  return {
+    grid:dark?'rgba(148,163,184,.12)':'rgba(100,116,139,.12)',
+    tick:dark?'#94a3b8':'#64748b',
+    text:dark?'#e2e8f0':'#334155'
+  };
+}
+function drawDailyBar(id){
+  const el=document.getElementById(id);if(!el)return;
+  const T=chartTheme();
+  const now=daysAgo(0);const today=dateStr(now);
+  const days=[];for(let i=7;i>=0;i--)days.push(dateStr(daysAgo(i)));
+  const daySet=new Set(days);
+  const totals={};days.forEach(d=>totals[d]=0);
+  expensesForCurrentCircle().filter(e=>daySet.has(e.date)).forEach(e=>{totals[e.date]=Math.round((totals[e.date])+e.amount)});
+  const labels=days.map(d=>{const dt=new Date(d+'T00:00:00Z');return dt.toLocaleDateString(undefined,{month:'short',day:'numeric'})});
+  const data=days.map(d=>totals[d]);
+  if(charts[id]){try{charts[id].destroy()}catch(e){}}
+  const ctx=el.getContext('2d');
+  const grad=ctx.createLinearGradient(0,0,0,150);grad.addColorStop(0,'rgba(16,185,129,.9)');grad.addColorStop(1,'rgba(16,185,129,.15)');
+  charts[id]=new Chart(ctx,{type:'bar',data:{labels,datasets:[{data,backgroundColor:grad,borderRadius:8,borderSkipped:false,maxBarThickness:26}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>fmtMoney(ctx.parsed.y,STATE.settings.currency)}}},scales:{x:{grid:{color:gridColor(T,'x')},ticks:{color:T.tick,font:{size:10},maxRotation:0}},y:{grid:{color:gridColor(T,'y')},ticks:{color:T.tick,font:{size:10},callback:v=>compactNum(v)},border:{display:false}}}}});
+  const wrap=el.closest('.glass')||document.body;wrap.style.height=null;
+}
+function gridColor(T,axis){return T.grid}
+function compactNum(v){if(Math.abs(v)>=1000000)return (v/1000000).toFixed(1)+'M';if(Math.abs(v)>=1000)return (v/1000).toFixed(0)+'k';return v}
+function drawAnalysisCharts(container){
+  destroyCharts();
+  const currency=STATE.settings.currency;
+  const c=currentCircle();
+  const exps=STATE.expenses.filter(e=>e.circleId===c.id);
+  const now=daysAgo(0);const today=dateStr(now);
+  const last30=[];for(let i=29;i>=0;i--)last30.push(dateStr(daysAgo(i)));
+  const set30=new Set(last30);
+  const daily=[];const dmap={};last30.forEach(d=>dmap[d]=0);
+  exps.filter(e=>set30.has(e.date)).forEach(e=>{dmap[e.date]+=e.amount});
+  last30.forEach(d=>daily.push(Math.round(dmap[d])));
+  const labels30=last30.map(d=>{const dt=new Date(d+'T00:00:00Z');return dt.toLocaleDateString(undefined,{month:'short',day:'numeric'})});
+  const catTot={};exps.forEach(e=>{catTot[e.category]=(catTot[e.category]||0)+e.amount});
+  const catData=Object.entries(catTot).map(([k,v])=>({key:k,value:Math.round(v)})).sort((a,b)=>b.value-a.value);
+  const memTot={};exps.forEach(e=>{memTot[e.payer]=(memTot[e.payer]||0)+e.amount});
+  const memData=Object.entries(memTot).map(([k,v])=>({id:k,value:Math.round(v)})).sort((a,b)=>b.value-a.value);
+
+  const T=chartTheme();
+  const barEl=container.getElementById?null:document.getElementById('anBar');
+  if(document.getElementById('anBar')){
+    const ctx=document.getElementById('anBar').getContext('2d');
+    const grad=ctx.createLinearGradient(0,0,0,200);grad.addColorStop(0,'rgba(16,185,129,.85)');grad.addColorStop(1,'rgba(16,185,129,.05)');
+    charts.anBar=new Chart(ctx,{type:'bar',data:{labels:labels30,datasets:[{data:daily,backgroundColor:grad,borderRadius:4,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:x=>fmtMoney(x.parsed.y,currency)}}},scales:{x:{grid:{display:false},ticks:{color:T.tick,font:{size:9},maxTicksLimit:8,maxRotation:0}},y:{grid:{color:T.grid},ticks:{color:T.tick,font:{size:10},callback:v=>compactNum(v)},border:{display:false}}}}});
+  }
+  if(document.getElementById('anDonut')){
+    const ctx2=document.getElementById('anDonut').getContext('2d');
+    charts.anDonut=new Chart(ctx2,{type:'doughnut',data:{labels:catData.map(d=>(catMap[d.key]||{label:d.key}).label),datasets:[{data:catData.map(d=>d.value),backgroundColor:catData.map(d=>(catMap[d.key]||{color:'#64748b'}).color),borderColor:chartTheme()['grid']?undefined:'#fff',borderWidth:2,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.label+': '+fmtMoney(c.parsed,currency)}}}}});
+  }
+  if(document.getElementById('anMem')){
+    const memNames=memData.map(d=>{const u=userById(d.id);return u?u.name.split(' ')[0]:'?'});
+    const ctx3=document.getElementById('anMem').getContext('2d');
+    const memColors=memData.map((d,i)=>[avatarBg(d.id)]);
+    charts.anMem=new Chart(ctx3,{type:'bar',data:{labels:memNames,datasets:[{data:memData.map(d=>d.value),backgroundColor:memColors,borderRadius:8,borderSkipped:false,maxBarThickness:40}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:x=>fmtMoney(x.parsed.x,currency)}}},scales:{x:{grid:{color:T.grid},ticks:{color:T.tick,font:{size:10},callback:v=>compactNum(v)},border:{display:false}},y:{grid:{display:false},ticks:{color:T.tick,font:{size:11}}}}}});
+  }
+}
+
+/* ========= ANALYTICS PAGE ========= */
+function renderAnalytics(page){
+  const c=currentCircle();if(!c){page.innerHTML=emptyState();return}
+  const exps=STATE.expenses.filter(e=>e.circleId===c.id);
+  const currency=STATE.settings.currency;
+  const now=daysAgo(0);
+  const last30set=new Set();for(let i=0;i<30;i++)last30set.add(dateStr(daysAgo(i)));
+  const last30=exps.filter(e=>last30set.has(e.date));
+  const total30=last30.reduce((s,e)=>s+e.amount,0);
+  const avgDaily=Math.round(total30/30);
+  const catTot={};exps.forEach(e=>{catTot[e.category]=(catTot[e.category]||0)+e.amount});
+  const catArr=Object.entries(catTot).sort((a,b)=>b[1]-a[1]);
+  const memTot={};exps.forEach(e=>{memTot[e.payer]=(memTot[e.payer]||0)+e.amount});
+  const memArr=Object.entries(memTot).sort((a,b)=>b[1]-a[1]);
+  page.innerHTML=`
+    <div class="space-y-5">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div><p class="text-slate-500 text-sm font-medium">Live insights</p><h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Analytics</h1></div>
+        <span class="chip chip-emerald">${ico('sparkle','w-3.5 h-3.5')} Auto analysis</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        ${kpiTile(total30,'Spend · 30d',currency,'gradient-emerald','arrowDown','30 days')}
+        ${kpiTile(avgDaily,'Avg daily',currency,'gradient-blue','chart','30-day mean')}
+        ${kpiTile(exps.length,'Transactions',currency,'gradient-amber','receipt','all-time')}
+        ${kpiTile(catArr[0]?catArr[0][1]:0,'Top category',currency,'gradient-rose','sparkle',catArr[0]?(catMap[catArr[0][0]]||{label:catArr[0][0]}).label:null)}
+      </div>
+
+      <div class="glass rounded-3xl p-5 lift">
+        <div class="flex items-center justify-between mb-3"><h2 class="font-bold text-sm">Spend — last 30 days</h2><span class="chip chip-slate">Daily totals</span></div>
+        <div style="height:220px"><canvas id="anBar"></canvas></div>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-3">
+        <div class="glass rounded-3xl p-5 lift">
+          <div class="flex items-center justify-between mb-3"><h2 class="font-bold text-sm">By category</h2><span class="chip chip-slate">${catArr.length} cats</span></div>
+          <div class="flex items-center gap-4">
+            <div style="height:160px;width:160px;flex:none"><canvas id="anDonut"></canvas></div>
+            <div class="flex-1 space-y-1.5 min-w-0">${catArr.slice(0,6).map(([k,v])=>{const pct=exps.length?Math.round(v/exps.length*0+catTot[k]/Math.max(1,Object.values(catTot).reduce((a,b)=>a+b,0))*100):0;return `<div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${(catMap[k]||{color:'#64748b'}).color}"></span><span class="text-xs font-medium flex-1 truncate">${(catMap[k]||{label:k}).label}</span><span class="text-xs font-semibold tabular">${fmtMoney(v,currency)}</span></div>`}).join('')||'<p class="text-xs text-slate-400">No data.</p>'}</div>
+          </div>
+        </div>
+        <div class="glass rounded-3xl p-5 lift">
+          <div class="flex items-center justify-between mb-3"><h2 class="font-bold text-sm">By member</h2><span class="chip chip-slate">Top spender</span></div>
+          <div style="height:160px"><canvas id="anMem"></canvas></div>
+        </div>
+      </div>
+    </div>`;
+  requestAnimationFrame(()=>drawAnalysisCharts(page));
+  setTimeout(()=>{const tr=page.querySelectorAll('[data-count]');if(tr){const vals=[total30,avgDaily,exps.length,catArr[0]?catArr[0][1]:0];tr.forEach((el,i)=>statCounter(el,vals[i]||0,{dollars:currency}))}},60);
+}
+/* ========= CIRCLES PAGE ========= */
+function renderCircles(page){
+  const cur=STATE.currentUserId;
+  const myCircles=STATE.circles.filter(c=>c.members.some(m=>m.userId===cur));
+  page.innerHTML=`
+    <div class="space-y-5">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div><p class="text-slate-500 text-sm font-medium">Your family & friend groups</p><h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Circles</h1></div>
+        <button class="btn btn-emerald text-sm" onclick="openCreateCircle()">${ico('plus','w-4 h-4')} New circle</button>
+      </div>
+
+      ${STATE.circles.filter(c=>c.members.some(m=>m.userId===cur)).length?`<div class="grid sm:grid-cols-2 gap-3">`+STATE.circles.filter(c=>c.members.some(m=>m.userId===cur)).map(c=>circleCard(c)).join('')+`</div>`:''}
+
+      <div class="glass rounded-3xl p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-10 h-10 rounded-2xl gradient-purple text-white flex items-center justify-center">${ico('key','w-5 h-5')}</span>
+          <div><h2 class="font-bold">Join with a code</h2><p class="text-xs text-slate-400">Got an invite? Enter it below.</p></div>
+        </div>
+        <div class="flex gap-2">
+          <input id="join-code-input" class="input uppercase tracking-widest !max-w-xs" placeholder="ABC-123-XYZ" onkeydown="if(event.key==='Enter')joinCircleSubmit()" />
+          <button class="btn btn-emerald text-sm" onclick="joinCircleSubmit()">Join</button>
+        </div>
+      </div>
+    </div>`;
+}
+function circleCard(c){
+  const cur=STATE.currentUserId;
+  const myM=c.members.find(m=>m.userId===cur);
+  const role=myM?myM.role:'viewer';
+  const memCount=c.members.length;
+  const exps=STATE.expenses.filter(e=>e.circleId===c.id);
+  const totalSpend=exps.reduce((s,e)=>s+e.amount,0);
+  const trips=STATE.trips.filter(t=>t.circleId===c.id);
+  const isCur=c.id===STATE.currentCircleId;
+  return `<div class="glass rounded-3xl p-5 lift">
+    <div class="flex items-start justify-between mb-3">
+      <div class="flex items-center gap-3">
+        <span class="w-11 h-11 rounded-2xl ${role==='owner'?'gradient-amber':'gradient-emerald'} text-2xl shadow-lg flex items-center justify-center shrink-0">${c.emoji||'🏠'}</span>
+        <div><h3 class="font-bold">${escapeHtml(c.name)}</h3><p class="text-xs text-slate-400">${memCount} members · ${ROLES[role].label}</p></div>
+      </div>
+      ${isCur?`<span class="chip chip-emerald">Active</span>`:``}
+    </div>
+    <div class="grid grid-cols-3 gap-2 mb-3 text-center">
+      <div class="bg-slate-500/5 rounded-2xl p-2"><p class="text-[0.6rem] text-slate-400 uppercase font-semibold">Spend</p><p class="text-sm font-bold tabular">${fmtMoney(totalSpend,STATE.settings.currency)}</p></div>
+      <div class="bg-slate-500/5 rounded-2xl p-2"><p class="text-[0.6rem] text-slate-400 uppercase font-semibold">Trips</p><p class="text-sm font-bold">${trips.length}</p></div>
+      <div class="bg-slate-500/5 rounded-2xl p-2"><p class="text-[0.6rem] text-slate-400 uppercase font-semibold">Members</p><p class="text-sm font-bold">${memCount}</p></div>
+    </div>
+    <div class="flex -space-x-2 mb-3">${c.members.slice(0,6).map(m=>{const u=userById(m.userId);return u?`<span title="${escapeHtml(u.name)} (${ROLES[m.role].label})" class="w-7 h-7 rounded-full ring-2 ring-white dark:ring-slate-800 text-[0.55rem] text-white font-bold flex items-center justify-center" style="background:${avatarBg(u.id)}">${initials(u.name)}</span>`:''}).join('')}${c.members.length>6?`<span class="w-7 h-7 rounded-full ring-2 ring-white dark:ring-slate-800 text-[0.55rem] font-bold flex items-center justify-center bg-slate-400 text-white">+${c.members.length-6}</span>`:''}</div>
+    <div class="flex gap-2 flex-wrap">
+      <button class="btn btn-outline text-xs flex-1" onclick="switchCircle('${c.id}')">${isCur?'Open':'Switch'} ${ico('chevron','w-3.5 h-3.5')}</button>
+      ${can.manageMembers(role)?`<button class="btn btn-outline text-xs" onclick="openManageCircle('${c.id}')">${ico('users','w-4 h-4')} Manage</button>`:''}
+      ${can.deleteCircle(role)?`<button class="btn btn-ghost text-xs !text-rose-500" onclick="openConfirmCircleDelete('${c.id}')">${ico('trash','w-4 h-4')}</button>`:''}
+    </div>
+  </div>`;
+}
+
+/* ========= SETTINGS PAGE ========= */
+function renderSettings(page){
+  const cur=currentUser();
+  const s=STATE.settings;
+  const theme=document.documentElement.classList.contains('dark')?'dark':'light';
+  page.innerHTML=`
+    <div class="space-y-5">
+      <div><p class="text-slate-500 text-sm font-medium">Your preferences</p><h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Settings</h1></div>
+
+      <div class="glass rounded-3xl p-5 lift flex items-center gap-4">
+        <span class="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-lg font-bold shrink-0" style="background:${avatarBg(cur.id)}">${initials(cur.name)}</span>
+        <div class="flex-1 min-w-0"><h3 class="font-bold">${escapeHtml(cur.name)}</h3><p class="text-sm text-slate-400">${escapeHtml(cur.handle)}</p></div>
+        <button class="btn btn-outline text-xs" onclick="openUserSwitcher()">${ico('logout','w-4 h-4')} Switch</button>
+      </div>
+
+      <div class="glass rounded-3xl p-5 lift">
+        <h2 class="font-bold text-sm mb-3 flex items-center gap-2">${ico('sun','w-4 h-4 text-amber-500')} Appearance</h2>
+        <div class="grid grid-cols-3 gap-2" id="theme-opts">
+          ${[['light','Light','☀️'],['dark','Dark','🌙']].map(([k,label,em])=>`<button onclick="setThemeMode('${k}')" data-theme="${k}" class="flex flex-col items-center gap-1 p-3 rounded-2xl border ${theme===k?'border-emerald-400 bg-emerald-500/10':'border-slate-200 dark:border-slate-700 hover:border-slate-300'} transition-colors text-xs font-semibold"><span class="text-xl">${em}</span>${label}</button>`).join('')}
+        </div>
+      </div>
+
+      <div class="glass rounded-3xl p-5 lift">
+        <h2 class="font-bold text-sm mb-3 flex items-center gap-2">${ico('chart','w-4 h-4 text-emerald-500')} Currency</h2>
+        <div class="grid grid-cols-3 gap-2" id="currency-opts">
+          ${[['PHP','₱','PHP'],['USD','$','USD'],['EUR','€','EUR']].map(([sym,glyph,label])=>`<button onclick="setCurrency('${sym}')" data-ccy="${sym}" class="flex flex-col items-center gap-1 p-3 rounded-2xl border ${s.currency===sym?'border-emerald-400 bg-emerald-500/10':'border-slate-200 dark:border-slate-700 hover:border-slate-300'} transition-colors text-xs font-semibold"><span class="text-xl">${glyph}</span>${label}</button>`).join('')}
+        </div>
+      </div>
+
+      <div class="glass rounded-3xl p-5 lift">
+        <h2 class="font-bold text-sm mb-1 flex items-center gap-2">${ico('download','w-4 h-4 text-blue-500')} Export data</h2>
+        <p class="text-xs text-slate-400 mb-3">Download your data as CSV files.</p>
+        <div class="flex gap-2 flex-wrap">
+          <button class="btn btn-outline text-xs" onclick="exportExpensesCSV()">${ico('receipt','w-4 h-4')} Expenses</button>
+          <button class="btn btn-outline text-xs" onclick="exportTripsCSV()">${ico('plane','w-4 h-4')} Trips</button>
+        </div>
+      </div>
+
+      <div class="glass rounded-3xl p-5 lift border border-rose-300/30 dark:border-rose-900/40">
+        <h2 class="font-bold text-sm mb-1 flex items-center gap-2 text-rose-500">${ico('alert','w-4 h-4')} Danger zone</h2>
+        <p class="text-xs text-slate-400 mb-3">Reset erases all MIMO data stored in this browser.</p>
+        <button class="btn btn-rose text-xs" onclick="openConfirmReset()">${ico('trash','w-4 h-4')} Reset all data</button>
+      </div>
+    </div>`;
+}
+
+/* ========= USER SWITCHER ========= */
+function openUserSwitcher(){
+  const m=document.createElement('div');m.className='modal-backdrop';
+  m.innerHTML=`
+    <div class="modal-card">
+      <div class="flex items-center justify-between mb-4"><h3 class="font-bold text-lg">Switch user</h3><button onclick="closeModal()" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">${ico('x','w-5 h-5')}</button></div>
+      <p class="text-xs text-slate-400 mb-3">Demo login — pick who you are. Your role in each circle is shown.</p>
+      <div class="space-y-1.5 max-h-72 overflow-auto scrollbar-thin">`+
+        STATE.users.map(u=>{
+          const isCur=u.id===STATE.currentUserId;
+          const roles=STATE.circles.map(c=>{const r=memberRoleIn(c,u.id);return r?`${c.emoji} ${ROLES[r].label}`:null}).filter(Boolean);
+          return `<button onclick="switchUser('${u.id}')" class="w-full flex items-center gap-3 p-3 rounded-2xl ${isCur?'bg-emerald-500/10 border border-emerald-300':'hover:bg-slate-500/5 border border-transparent'} transition-colors text-left">
+            <span class="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0" style="background:${avatarBg(u.id)}">${initials(u.name)}</span>
+            <span class="flex-1 min-w-0"><span class="block font-semibold text-sm truncate">${escapeHtml(u.name)}</span><span class="text-xs text-slate-400">${escapeHtml(u.handle)}</span></span>
+            <span class="flex flex-col gap-0.5 items-end">${roles.slice(0,2).map(r=>`<span class="chip chip-slate !text-[0.55rem]">${r}</span>`).join('')}${isCur?`<span class="chip chip-emerald">Active</span>`:''}</span>
+          </button>`;
+        }).join('')+`
+      </div>
+    </div>`;
+  const mr=document.getElementById('modal-root');mr.innerHTML='';mr.appendChild(m);
+  m.addEventListener('click',e=>{if(e.target===m)closeModal()});
+}
+function switchUser(id){
+  STATE.currentUserId=id;saveState();
+  closeModal();notifySuccess(`Switched to ${userById(id).name}`);
+  if(!currentCircle())switchCircle(STATE.circles[0].id);
+  route();
+}
+
+/* ========= TRIP DETAIL ========= */
+function openTripDetail(tripId){
+  const t=STATE.trips.find(x=>x.id===tripId);if(!t)return;
+  const role=myRole(t.circleId,STATE.currentUserId);
+  const c=circleById(t.circleId);
+  const currency=STATE.settings.currency;
+  const total=tripOverall(t);const budget=total.budget;const spent=total.spent;
+  const pct=budget>0?Math.min(100,Math.round(spent/budget*100)):0;
+  const canLog=can.manageTrips(role)||can.log(role);
+  const m=document.createElement('div');m.className='modal-backdrop';
+  const memberSet=new Set(t.members||[]);
+  m.innerHTML=`
+    <div class="modal-card !max-w-2xl">
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex items-center gap-3">
+          <span class="w-12 h-12 rounded-2xl gradient-blue text-white flex items-center justify-center">${ico('plane','w-6 h-6')}</span>
+          <div><h2 class="text-lg font-bold leading-tight">${escapeHtml(t.name)}</h2><p class="text-xs text-slate-400 flex items-center gap-1">${ico('map','w-3 h-3')} ${escapeHtml(t.destination)} · ${formatHumanDate(new Date(t.startDate+'T00:00:00Z'))} – ${formatHumanDate(new Date(t.endDate+'T00:00:00Z'))}</p></div>
+        </div>
+        <button onclick="closeModal()" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">${ico('x','w-5 h-5')}</button>
+      </div>
+      <span class="chip ${t.status==='active'?'chip-emerald':'chip-slate'} mb-3 inline-flex">${t.status==='active'?'Active':'Planned'}</span>
+
+      <div class="glass rounded-2xl p-4 mb-4">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm font-semibold">Overall budget</span>
+          <span class="font-bold tabular">${fmtMoney(spent,currency)} <span class="text-slate-400 font-normal text-xs">/ ${fmtMoney(budget,currency)}</span></span>
+        </div>
+        <div class="progress h-2.5 mb-2"><div class="progress-bar ${t.status==='active'?'gradient-emerald':'gradient-blue'}" style="width:${pct}%"></div></div>
+        <p class="text-xs text-slate-400">${pct}% used · <span class="font-semibold ${budget-spent>0?'text-emerald-500':'text-rose-500'}">${fmtMoney(Math.max(0,budget-spent),currency)} remaining</span></p>
+      </div>
+
+      <p class="label">Per-category breakdown</p>
+      <div class="space-y-3 mb-4">${(t.categories||[]).map(cc=>{
+        const tc=tripCatMap[cc.key]||{label:cc.key,color:'#64748b'};
+        const cs=tripCatSpent(t,cc.key);const cb=cc.amount;const cp=cb>0?Math.min(100,Math.round(cs/cb*100)):0;
+        return `<div>
+          <div class="flex items-center justify-between text-xs mb-1">
+            <span class="flex items-center gap-1.5 font-semibold"><span class="w-2 h-2 rounded-full" style="background:${tc.color}"></span>${tc.label}</span>
+            <span class="tabular text-slate-500">${fmtMoney(cs,currency)} / ${fmtMoney(cb,currency)}<span class="${cp>=100?'text-rose-500 font-bold ml-1':''}">${cp>=100?'✓':''}</span></span>
+          </div>
+          <div class="progress h-1.5"><div class="progress-bar ${cp>=100?'gradient-rose':'gradient-blue'}" style="width:${cp}%;background:${tc.color}"></div></div>
+        </div>`;
+      }).join('')}</div>
+
+      <div class="flex items-center justify-between mb-2">
+        <p class="label !mb-0">Trip expenses (${(t.expenses||[]).length})</p>
+        <div class="flex gap-2">
+          ${can.manageTrips(role)?`<button class="btn btn-outline text-xs" onclick="openAddTripExpense('${tripId}')">${ico('plus','w-4 h-4')} Add</button>`:''}
+          ${can.manageTrips(role)?`<button class="btn btn-outline text-xs" onclick="openEditTrip('${tripId}')">${ico('edit','w-4 h-4')} Edit</button>`:''}
+        </div>
+      </div>
+      <div class="space-y-1 mb-2 max-h-48 overflow-auto scrollbar-thin">${tripExpenseRows(t)||`<p class="text-sm text-slate-400 py-4 text-center">No trip expenses yet.</p>`}</div>
+
+      <div class="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-700">
+        <div class="flex -space-x-1.5">${(c?c.members.filter(m=>memberSet.has(m.userId)):[]).filter(m=>userById(m.userId)).map(m=>{const u=userById(m.userId);return `<span title="${escapeHtml(u.name)}" class="w-6 h-6 rounded-full ring-2 ring-white dark:ring-slate-800 text-[0.5rem] text-white font-bold flex items-center justify-center" style="background:${avatarBg(u.id)}">${initials(u.name)}</span>`}).join('')}</div>
+        <div class="flex gap-2">
+          ${can.deleteCircle(myRole(t.circleId,STATE.currentUserId))?`<button class="btn btn-ghost text-xs !text-rose-500" onclick="deleteTrip('${tripId}')">${ico('trash','w-4 h-4')}</button>`:''}
+          <button class="btn btn-emerald text-xs" onclick="closeModal()">${ico('check','w-4 h-4')} Done</button>
+        </div>
+      </div>
+    </div>`;
+  const mr=document.getElementById('modal-root');mr.innerHTML='';mr.appendChild(m);
+  m.addEventListener('click',e=>{if(e.target===m)closeModal()});
+}
+function tripExpenseRows(t){
+  const currency=STATE.settings.currency;
+  return (t.expenses||[]).map(e=>{
+    const tc=tripCatMap[e.cat]||{label:e.cat,color:'#64748b'};
+    const payer=userById(e.payer);
+    return `<div class="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-500/5">
+      <span class="w-8 h-8 rounded-lg flex items-center justify-center text-xs" style="background:${tc.color}1a">${ico('sparkle','w-3.5 h-3.5')}</span>
+      <span class="flex-1 min-w-0"><span class="block text-sm font-semibold truncate">${tc.label}</span><span class="text-[0.65rem] text-slate-400">${escapeHtml(payer?payer.name:'?')} · ${formatHumanDate(new Date(e.date))}</span></span>
+      <span class="text-sm font-bold tabular">${fmtMoney(e.amount,currency)}</span>
+    </div>`;
+  }).join('');
+}
+function deleteTrip(tripId){
+  STATE.trips=STATE.trips.filter(x=>x.id!==tripId);saveState();
+  closeModal();notifySuccess('Trip deleted');route();
+}
+
+/* ========= CIRCLE SWITCHER ========= */
+function openCircleSwitcher(){
+  const cur=STATE.currentUserId;
+  const my=STATE.circles.filter(c=>c.members.some(m=>m.userId===cur));
+  const m=document.createElement('div');m.className='modal-backdrop';
+  m.innerHTML=`
+    <div class="modal-card">
+      <div class="flex items-center justify-between mb-3"><h3 class="font-bold text-lg">Your circles</h3><button onclick="closeModal()" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">${ico('x','w-5 h-5')}</button></div>
+      <div class="space-y-1.5 mb-3">${my.map(c=>{const isCur=c.id===STATE.currentCircleId;const role=memberRoleIn(c,cur);return `<button onclick="switchCircle('${c.id}')" class="w-full flex items-center gap-3 p-3 rounded-2xl ${isCur?'bg-emerald-500/10':'hover:bg-slate-500/5'} transition-colors text-left">
+        <span class="text-2xl">${c.emoji||'🏠'}</span>
+        <span class="flex-1 min-w-0"><span class="block font-semibold text-sm">${escapeHtml(c.name)}</span><span class="text-xs text-slate-400">${c.members.length} members</span></span>
+        <span class="chip ${ROLES[role].chip}">${ROLES[role].label}</span>
+        ${isCur?`<span class="chip chip-emerald">Active</span>`:''}
+      </button>`}).join('')}</div>
+      <button class="w-full btn btn-outline text-xs" onclick="closeModal();openCreateCircle()">${ico('plus','w-4 h-4')} New circle</button>
+    </div>`;
+  const mr=document.getElementById('modal-root');mr.innerHTML='';mr.appendChild(m);
+  m.addEventListener('click',e=>{if(e.target===m)closeModal()});
+}
+function switchCircle(id){
+  if(!STATE.circles.find(c=>c.id===id)){notifyError('Circle not found');return}
+  STATE.currentCircleId=id;saveState();
+  closeModal();
+  const c=circleById(id);notifySuccess(`Switched to ${c.name}`);
+  route();
+}
+
+function closeModal(){
+  const mr=document.getElementById('modal-root');
+  if(mr)mr.innerHTML='';
+  destroyCharts();
+}
+/* ========= EXPENSE MODAL ========= */
+function openAddExpense(editId){
+  const role=myRole(STATE.currentCircleId,STATE.currentUserId);
+  if(!can.log(role)){notifyError('Your role only allows viewing');return}
+  const c=currentCircle();if(!c)return;
+  const e=editId?STATE.expenses.find(x=>x.id===editId):null;
+  const editor=e?e.payer===STATE.currentUserId||can.manageTrips(role):true;
+  const currency=STATE.settings.currency;
+  const isMember=c.members.some(m=>m.userId===STATE.currentUserId);
+  const payers=c.members.filter(m=>userById(m.userId));
+  const m=document.createElement('div');m.className='modal-backdrop';
+  m.innerHTML=`
+    <div class="modal-card">
+      <div class="flex items-center justify-between mb-4"><h3 class="font-bold text-lg">${e?'Edit expense':'Add expense'}</h3><button onclick="closeModal()" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">${ico('x','w-5 h-5')}</button></div>
+      <div class="space-y-4">
+        <div>
+          <label class="label">Amount (${currency})</label>
+          <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-slate-400">${currency==='PHP'?'₱':currency==='USD'?'$':'€'}</span><input id="ex-amount" type="number" step="0.01" min="0" value="${e?e.amount:''}" class="input !pl-8 text-lg font-bold tabular" placeholder="0.00" inputmode="decimal" autofocus /></div>
+        </div>
+        <div>
+          <label class="label">Category</label>
+          <div class="grid grid-cols-4 gap-1.5" id="ex-cats">${CATEGORIES.map((cat,i)=>`<button type="button" data-cat="${cat.key}" onclick="pickCategory('${cat.key}')" class="flex flex-col items-center gap-1 p-2 rounded-xl border ${(e&&e.category===cat.key)||(!e&&i===0)?'border-emerald-400 bg-emerald-500/10':'border-slate-200 dark:border-slate-700 hover:border-slate-300'} transition-colors"><span class="text-lg">${cat.icon}</span><span class="text-[0.6rem] font-semibold">${cat.label}</span></button>`).join('')}</div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="label">Paid by</label>
+            <select id="ex-payer" class="input">${payers.map(p=>{const u=userById(p.userId);return `<option value="${p.userId}" ${e&&e.payer===p.userId?'selected':(!e&&p.userId===STATE.currentUserId?'selected':'')}>${escapeHtml(u?u.name:'?')}</option>`}).join('')}</select></div>
+          <div><label class="label">Date</label><input id="ex-date" type="date" value="${e?dateStr(e.date):todayStr()}" class="input" /></div>
+        </div>
+        <div><label class="label">Note <span class="normal-case font-medium opacity-60">(optional)</span></label><input id="ex-note" type="text" value="${e?escapeHtml(e.note||''):''}" class="input" placeholder="e.g. Groceries, Grab, dinner…" /></div>
+        <div class="flex gap-2">
+          <button class="btn btn-emerald flex-1" onclick="saveExpense('${e?e.id:''}')">${ico('check','w-4 h-4')} ${e?'Update':'Add expense'} <span class="text-xs font-bold ml-auto tabular">${fmtMoney(0,currency)}</span></button>
+        </div>
+      </div>
+    </div>`;
+  const mr=document.getElementById('modal-root');mr.innerHTML='';mr.appendChild(m);
+  m.addEventListener('click',ev=>{if(ev.target===m)closeModal()});
+  setTimeout(()=>{const a=document.getElementById('ex-amount');if(a)a.focus()},60);
+}
+let exSelectedCat='';
+function pickCategory(k){exSelectedCat=k;document.querySelectorAll('#ex-cats [data-cat]').forEach(b=>{const on=b.getAttribute('data-cat')===k;b.className='flex flex-col items-center gap-1 p-2 rounded-xl border '+(on?'border-emerald-400 bg-emerald-500/10':'border-slate-200 dark:border-slate-700 hover:border-slate-300')+' transition-colors'})}
+function saveExpense(id){
+  const role=myRole(STATE.currentCircleId,STATE.currentUserId);
+  if(!can.log(role)){notifyError('Not allowed');return}
+  const amount=parseFloat(document.getElementById('ex-amount').value);
+  if(isNaN(amount)||amount<=0){notifyError('Enter a valid amount');return}
+  const catEl=document.querySelector('#ex-cats [data-cat].border-emerald-400');
+  const cat=catEl?catEl.getAttribute('data-cat'):exSelectedCat||'food';
+  const payer=document.getElementById('ex-payer').value;
+  const date=document.getElementById('ex-date').value||todayStr();
+  const note=document.getElementById('ex-note').value.trim();
+  if(id){
+    const target=STATE.expenses.find(x=>x.id===id);
+    if(target){Object.assign(target,{circleId:STATE.currentCircleId,amount,category:cat,payer,date,note,updatedAt:new Date().toISOString()})}
+    notifySuccess('Expense updated');
+  } else {
+    STATE.expenses.unshift({id:uid('e'),circleId:STATE.currentCircleId,amount,category:cat,payer,date,note,createdAt:new Date().toISOString(),createdBy:STATE.currentUserId});
+    notifySuccess('Expense added '+fmtMoney(amount,STATE.settings.currency));
+  }
+  saveState();closeModal();route();
+}
+
+/* ========= TRIP MODAL ========= */
+function openAddTrip(editId){
+  const role=myRole(STATE.currentCircleId,STATE.currentUserId);
+  if(!can.manageTrips(role)){notifyError('Only admins & owners can create trips');return}
+  const c=currentCircle();
+  const t=editId?STATE.trips.find(x=>x.id===editId):null;
+  const m=document.createElement('div');m.className='modal-backdrop';
+  const members=c.members.map(m=>userById(m.userId)).filter(Boolean);
+  const memSet=new Set((t?t.members:[]).map(id=>id));
+  const inTrip=id=>memSet.has(id);
+  m.innerHTML=`
+    <div class="modal-card !max-w-xl">
+      <div class="flex items-center justify-between mb-4"><h3 class="font-bold text-lg">${t?'Edit trip':'New trip'}</h3><button onclick="closeModal()" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">${ico('x','w-5 h-5')}</button></div>
+      <div class="space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="label">Trip name</label><input id="tr-name" value="${t?escapeHtml(t.name):''}" class="input" placeholder="Baguio Weekend" /></div>
+          <div><label class="label">Destination</label><input id="tr-dest" value="${t?escapeHtml(t.destination):''}" class="input" placeholder="Baguio City" /></div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="label">Start date</label><input id="tr-start" type="date" value="${t?dateStr(t.startDate):dateStr(daysFromNow(7))}" class="input" /></div>
+          <div><label class="label">End date</label><input id="tr-end" type="date" value="${t?dateStr(t.endDate):dateStr(daysFromNow(12))}" class="input" /></div>
+        </div>
+        <div>
+          <label class="label">Total budget (${STATE.settings.currency})</label>
+          <input id="tr-budget" type="number" step="1" min="0" value="${t?t.budget:''}" class="input font-bold tabular" placeholder="12000" />
+        </div>
+        <div>
+          <label class="label">Budget by category</label>
+          <div class="grid grid-cols-2 gap-2">${TRIP_CATEGORIES.map(tc=>{const cur=t?(t.categories.find(x=>x.key===tc.key)||{}).amount:'';return `<div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full shrink-0" style="background:${tc.color}"></span><span class="text-xs font-semibold w-20">${tc.label}</span><input data-tcat="${tc.key}" type="number" min="0" value="${cur||''}" class="input !py-1.5 !px-2 text-sm tabular" placeholder="0" /></div>`}).join('')}</div>
+        </div>
+        <div>
+          <label class="label">Who's going?</label>
+          <div class="flex flex-wrap gap-1.5 no-scrollbar">${members.map(u=>{const on=!t||inTrip(u.id);return `<button type="button" data-tmember="${u.id}" onclick="toggleTripMember('${u.id}')" class="chip chip-slate ${on?'mgo-on !bg-emerald-500/15 !text-emerald-600':''}">${initials(u.name)} ${escapeHtml(u.name.split(' ')[0])}</button>`}).join('')}</div>
+        </div>
+        <div>
+          <label class="label">Status</label>
+          <div class="flex gap-2">${[['active','Active','●'],['planned','Planned','○']].map(([k,lab,dot])=>`<button type="button" onclick="pickTripStatus('${k}')" data-tstatus="${k}" class="chip chip-slate ${(t?(t.status===k):(k==='planned'))?'mstat-on !bg-emerald-500/15 !text-emerald-600':''}">${dot} ${lab}</button>`).join('')}</div>
+        </div>
+        <div class="flex gap-2"><button class="btn btn-emerald flex-1" onclick="saveTrip('${t?t.id:''}')">${ico('check','w-4 h-4')} ${t?'Update trip':'Create trip'}</button></div>
+      </div>
+    </div>`;
+  const mr=document.getElementById('modal-root');mr.innerHTML='';mr.appendChild(m);
+  m.addEventListener('click',ev=>{if(ev.target===m)closeModal()});
+}
+let tripSelectedMembers=new Set();
+let tripSelStatus='planned';
+function toggleTripMember(id){const b=document.querySelector(`[data-tmember="${id}"]`);if(!b)return;const on=b.classList.toggle('mgo-on');if(on){b.classList.add('!bg-emerald-500/15','!text-emerald-600')}else{b.classList.remove('!bg-emerald-500/15','!text-emerald-600')}}
+function pickTripStatus(k){tripSelStatus=k;document.querySelectorAll('[data-tstatus]').forEach(b=>{const on=b.getAttribute('data-tstatus')===k;b.classList.toggle('mstat-on',on);b.className='chip chip-slate '+(on?'!bg-emerald-500/15 !text-emerald-600':'')})}
+function saveTrip(id){
+  const role=myRole(STATE.currentCircleId,STATE.currentUserId);
+  if(!can.manageTrips(role)){notifyError('Not allowed');return}
+  const name=document.getElementById('tr-name').value.trim();
+  if(!name){notifyError('Trip name required');return}
+  const dest=document.getElementById('tr-dest').value.trim()||name;
+  const start=document.getElementById('tr-start').value;
+  const end=document.getElementById('tr-end').value;
+  const budget=parseFloat(document.getElementById('tr-budget').value)||0;
+  const categories=TRIP_CATEGORIES.map(tc=>({key:tc.key,amount:parseFloat(document.querySelector(`[data-tcat="${tc.key}"]`).value)||0}));
+  const activeSel=document.querySelector('[data-tstatus].mstat-on');
+  const status=activeSel?activeSel.getAttribute('data-tstatus'):tripSelStatus;
+  const members=[...document.querySelectorAll('[data-tmember].mgo-on')].map(el=>el.getAttribute('data-tmember'));
+  if(id){
+    const t=STATE.trips.find(x=>x.id===id);
+    if(t)Object.assign(t,{name,destination:dest,startDate:start,endDate:end,budget,categories,members:members.length?members:t.members,status});
+    notifySuccess('Trip updated');
+  } else {
+    STATE.trips.push({id:uid('t'),circleId:STATE.currentCircleId,name,destination:dest,startDate:start,endDate:end,budget,categories,status,members:members.length?members:STATE.circles.find(c=>c.id===STATE.currentCircleId).members.map(m=>m.userId),expenses:[]});
+    notifySuccess('Trip created');
+  }
+  saveState();closeModal();route();
+}
+function openEditTrip(id){openAddTrip(id)}
+function openAddTripExpense(tripId,editExpId){
+  const role=myRole(STATE.currentCircleId,STATE.currentUserId);
+  const t=STATE.trips.find(x=>x.id===tripId);if(!t)return;
+  const c=circleById(t.circleId);if(!c)return;
+  const ee=editExpId?(t.expenses||[]).find(e=>e.id===editExpId):null;
+  if(!can.manageTrips(role)){notifyError('Only admins & owners can manage trip expenses');return}
+  const payers=t.members.map(id=>userById(id)).filter(Boolean);
+  const m=document.createElement('div');m.className='modal-backdrop';
+  m.innerHTML=`
+    <div class="modal-card">
+      <div class="flex items-center justify-between mb-4"><h3 class="font-bold text-lg">Add expense · ${escapeHtml(t.name)}</h3><button onclick="closeModal()" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">${ico('x','w-5 h-5')}</button></div>
+      <div class="space-y-4">
+        <div><label class="label">Amount (${STATE.settings.currency})</label><input id="te-amount" type="number" step="0.01" min="0" value="${ee?ee.amount:''}" class="input text-lg font-bold tabular" placeholder="0.00" /></div>
+        <div><label class="label">Category</label><div class="grid grid-cols-3 gap-1.5" id="te-cats">${TRIP_CATEGORIES.map((tc,i)=>`<button type="button" data-tecat="${tc.key}" onclick="pickTripCat('${tc.key}')" class="flex flex-col items-center gap-1 p-2 rounded-xl border ${(ee&&ee.cat===tc.key)||(!ee&&i===0)?'border-emerald-400 bg-emerald-500/10':'border-slate-200 dark:border-slate-700'} transition-colors text-xs font-semibold"><span class="w-2 h-2 rounded-full mb-0.5" style="background:${tc.color}"></span>${tc.label}</button>`).join('')}</div></div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="label">Paid by</label><select id="te-payer" class="input">${payers.map(p=>`<option value="${p.id}" ${STATE.currentUserId===p.id?'selected':''}>${escapeHtml(p.name)}</option>`).join('')}</select></div>
+          <div><label class="label">Date</label><input id="te-date" type="date" value="${ee?dateStr(ee.date):todayStr()}" class="input" /></div>
+        </div>
+        <div><label class="label">Note</label><input id="te-note" value="${ee?escapeHtml(ee.note||''):''}" class="input" placeholder="e.g. Van, dinner…" /></div>
+        <button class="btn btn-emerald w-full" onclick="saveTripExpense('${tripId}','${ee?ee.id:''}')">${ico('check','w-4 h-4')} ${ee?'Update':'Add'} expense</button>
+      </div>
+    </div>`;
+  const mr=document.getElementById('modal-root');mr.innerHTML='';mr.appendChild(m);
+  m.addEventListener('click',ev=>{if(ev.target===m)closeModal()});
+}
+let tripCatSel='';
+function pickTripCat(k){tripCatSel=k;document.querySelectorAll('#te-cats [data-tecat]').forEach(b=>{const on=b.getAttribute('data-tecat')===k;b.className='flex flex-col items-center gap-1 p-2 rounded-xl border '+(on?'border-emerald-400 bg-emerald-500/10':'border-slate-200 dark:border-slate-700')+' transition-colors text-xs font-semibold'})}
+function saveTripExpense(tripId,eeId){
+  const t=STATE.trips.find(x=>x.id===tripId);if(!t)return;
+  const amount=parseFloat(document.getElementById('te-amount').value);
+  if(isNaN(amount)||amount<=0){notifyError('Enter amount');return}
+  const sel=document.querySelector('#te-cats [data-tecat].border-emerald-400');
+  const cat=sel?sel.getAttribute('data-tecat'):tripCatSel||'transport';
+  const payer=document.getElementById('te-payer').value;
+  const date=document.getElementById('te-date').value||todayStr();
+  const note=document.getElementById('te-note').value.trim();
+  t.expenses=t.expenses||[];
+  if(eeId){const x=t.expenses.find(e=>e.id===eeId);if(x)Object.assign(x,{amount,cat,payer,date,note})}
+  else t.expenses.push({id:uid('te'),amount,cat,payer,date,note,createdBy:STATE.currentUserId});
+  saveState();closeModal();openTripDetail(tripId);route();
+}
+
+/* ========= CREATE / JOIN CIRCLE ========= */
+function openCreateCircle(){
+  const m=document.createElement('div');m.className='modal-backdrop';
+  m.innerHTML=`
+    <div class="modal-card">
+      <div class="flex items-center justify-between mb-4"><h3 class="font-bold text-lg">New circle</h3><button onclick="closeModal()" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">${ico('x','w-5 h-5')}</button></div>
+      <div class="space-y-4">
+        <div><label class="label">Circle name</label><input id="cc-name" class="input" placeholder="e.g. Beach Crew" /></div>
+        <div><label class="label">Emoji <span class="normal-case font-medium opacity-60">(optional)</span></label><input id="cc-emoji" class="input" placeholder="🏝️" maxlength="4" /></div>
+        <button class="btn btn-emerald w-full" onclick="createCircle()">${ico('plus','w-4 h-4')} Create circle</button>
+      </div>
+    </div>`;
+  const mr=document.getElementById('modal-root');mr.innerHTML='';mr.appendChild(m);
+  m.addEventListener('click',ev=>{if(ev.target===m)closeModal()});
+}
+function createCircle(){
+  const name=document.getElementById('cc-name').value.trim();
+  if(!name){notifyError('Circle name required');return}
+  const em=(document.getElementById('cc-emoji').value.trim()||'🏠');
+  const newC={id:uid('c'),name,emoji:em,createdAt:new Date().toISOString(),invite:inviteCode(),members:[{userId:STATE.currentUserId,role:'owner',joinedAt:new Date().toISOString()}]};
+  STATE.circles.push(newC);STATE.currentCircleId=newC.id;
+  saveState();closeModal();notifySuccess(`Created ${name} — you're the owner`);
+  route();
+}
+function joinCircleSubmit(){
+  const code=document.getElementById('join-code-input').value.trim().toUpperCase();
+  if(!code){notifyError('Enter an invite code');return}
+  const c=STATE.circles.find(x=>x.invite.toUpperCase()===code);
+  if(!c){notifyError('Invalid invite code');return}
+  if(c.members.some(m=>m.userId===STATE.currentUserId)){notifyInfo('You are already in '+c.name);switchCircle(c.id);return}
+  const myRoleAny=myRole(c.id,STATE.currentUserId);
+  c.members.push({userId:STATE.currentUserId,role:'member',joinedAt:new Date().toISOString()});
+  STATE.currentCircleId=c.id;saveState();closeModal();
+  notifySuccess(`Joined ${c.name} as Member 🎉`);route();
+}
+
+/* ========= MANAGE CIRCLE (members) ========= */
+function openManageCircle(cid){
+  const c=circleById(cid);if(!c)return;
+  const role=myRole(cid,STATE.currentUserId);
+  if(!can.manageMembers(role)){notifyError('Admins & owners only');return}
+  const members=c.members.map(m=>Object.assign({},userById(m.userId),{role:m.role,joinedAt:m.joinedAt})).filter(Boolean);
+  const nonMemberUsers=STATE.users.filter(u=>!c.members.some(m=>m.userId===u.id));
+  const m=document.createElement('div');m.className='modal-backdrop';
+  m.innerHTML=`
+    <div class="modal-card">
+      <div class="flex items-center justify-between mb-2"><h3 class="font-bold text-lg">${c.emoji} ${escapeHtml(c.name)}</h3><button onclick="closeModal()" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">${ico('x','w-5 h-5')}</button></div>
+      <div class="glass rounded-2xl p-3 flex items-center gap-2 my-3">
+        <span class="chip chip-slate shrink-0">${ico('key','w-3 h-3')} Invite code</span>
+        <code class="font-bold tracking-widest flex-1 text-center">${c.invite}</code>
+        <button class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500" onclick="copyInviteCode('${c.invite}')" title="Copy">${ico('copy','w-4 h-4')}</button>
+      </div>
+      <p class="label">Members (${members.length})</p>
+      <div class="space-y-1.5 mb-4 max-h-64 overflow-auto scrollbar-thin">${members.map(x=>{
+        const isSelf=x.id===STATE.currentUserId;
+        const isCurrentOwner=x.role==='owner';
+        return `<div class="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-500/5">
+          <span class="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style="background:${avatarBg(x.id)}">${initials(x.name)}</span>
+          <div class="flex-1 min-w-0"><p class="text-sm font-semibold truncate">${escapeHtml(x.name)} ${isSelf?'<span class="text-emerald-500 text-xs">(you)</span>':''}</p><p class="text-xs text-slate-400">${escapeHtml(x.handle)} · joined ${formatHumanDate(new Date(x.joinedAt))}</p></div>
+          ${isCurrentOwner?'<span class="chip chip-amber">Owner</span>':`<select onchange="changeMemberRole('${cid}','${x.id}',this.value)" class="input !py-1 !px-2 text-xs !w-24">${Object.keys(ROLES).filter(r=>r!=='owner').map(r=>`<option ${x.role===r?'selected':''} value="${r}">${ROLES[r].label}</option>`).join('')}</select>`}
+          ${!isCurrentOwner&&x.id!==STATE.currentUserId?`<button class="p-1.5 rounded-lg text-slate-400 hover:text-rose-500" onclick="removeMember('${cid}','${x.id}')" title="Remove">${ico('x','w-4 h-4')}</button>`:''}
+        </div>`;
+      }).join('')}</div>
+      ${nonMemberUserIds(c).length?`<p class="label">Add member (demo pick)</p><div class="flex flex-wrap gap-1.5">${nonMemberUserIds(c).map(id=>{const u=userById(id);if(!u)return'';return `<button class="chip chip-slate" onclick="addMember('${cid}','${id}')">+ ${escapeHtml(u.name)}</button>`}).join('')}</div>`:`<p class="text-xs text-slate-400">Everyone in the demo is a member.</p>`}
+    </div>`;
+  const mr=document.getElementById('modal-root');mr.innerHTML='';mr.appendChild(m);
+  m.addEventListener('click',ev=>{if(ev.target===m)closeModal()});
+}
+function nonMemberUserIds(c){return STATE.users.filter(u=>!c.members.some(m=>m.userId===u.id)).map(u=>u.id)}
+function addMember(cid,uid){
+  const c=circleById(cid);if(!c)return;
+  const role=myRole(cid,STATE.currentUserId);
+  if(!can.manageMembers(role)){notifyError('Not allowed');return}
+  if(c.members.some(m=>m.userId===uid)){notifyInfo('Already a member');return}
+  c.members.push({userId:uid,role:'member',joinedAt:new Date().toISOString()});
+  saveState();notifySuccess(`Added ${userById(uid).name}`);openManageCircle(cid);
+}
+function removeMember(cid,uid){
+  const c=circleById(cid);if(!c)return;
+  c.members=c.members.filter(m=>m.userId!==uid);
+  const keep=c.members.some(m=>m.role==='owner')?c.members:c.members.map((m,i)=>i===0?Object.assign({},m,{role:'owner'}):m);
+  if(c.members.length&&!c.members.some(m=>m.role==='owner')){keep[0].role='owner'}
+  c.members=keep;
+  saveState();notifySuccess('Member removed');openManageCircle(cid);
+}
+function changeMemberRole(cid,uid,newRole){
+  const c=circleById(cid);if(!c)return;
+  const m=c.members.find(x=>x.userId===uid);if(!m)return;
+  m.role=newRole;saveState();
+  notifySuccess(`Role updated to ${ROLES[newRole].label}`);
+  openManageCircle(cid);
+}
+function copyInviteCode(code){
+  try{navigator.clipboard.writeText(code).then(()=>notifySuccess('Invite code copied'))}catch(e){notifyInfo(code)}
+}
+
+/* ========= CONFIRM MODAL + DELETE CIRCLE ========= */
+function openConfirmCircleDelete(cid){
+  const c=circleById(cid);if(!c)return;
+  openConfirm(`Delete "${c.name}"?`,'This removes the circle and all its expenses & trips. This cannot be undone.','Delete circle',()=>{
+    STATE.circles=STATE.circles.filter(x=>x.id!==cid);
+    STATE.expenses=STATE.expenses.filter(e=>e.circleId!==cid);
+    STATE.trips=STATE.trips.filter(t=>t.circleId!==cid);
+    if(STATE.currentCircleId===cid)STATE.currentCircleId=(STATE.circles[0]||{}).id||null;
+    saveState();closeModal();notifySuccess('Circle deleted');route();
+  },'rose');
+}
+function openConfirmReset(){
+  openConfirm('Reset all MIMO data?','This erases users, circles, expenses & trips saved in this browser and restores the demo data.','Reset',()=>reseedDemo(),'rose');
+}
+function openConfirm(title,msg,btnLabel,action,btnType='emerald'){
+  const m=document.createElement('div');m.className='modal-backdrop';
+  m.innerHTML=`<div class="modal-card !max-w-sm">
+    <div class="text-center py-2">
+      <span class="inline-flex w-14 h-14 rounded-2xl ${btnType==='rose'?'bg-rose-500/10 text-rose-500':'bg-emerald-500/10 text-emerald-500'} items-center justify-center mb-3">${ico(btnType==='rose'?'alert':'refresh','w-7 h-7')}</span>
+      <h3 class="font-bold text-lg mb-1">${escapeHtml(title)}</h3>
+      <p class="text-sm text-slate-400 mb-5">${escapeHtml(msg)}</p>
+      <div class="flex gap-2">
+        <button class="btn btn-outline flex-1" onclick="closeModal()">Cancel</button>
+        <button class="btn ${btnType==='rose'?'btn-rose':'btn-emerald'} flex-1" onclick="confirmAct()">${escapeHtml(btnLabel)}</button>
+      </div>
+    </div></div>`;
+  window.__confirmAction=()=>{closeModal();action()};
+  const mr=document.getElementById('modal-root');mr.innerHTML='';mr.appendChild(m);
+  m.addEventListener('click',ev=>{if(ev.target===m)closeModal()});
+  document.querySelector('[onclick="confirmAct()"]');
+  const btn=m.querySelector('[onclick^="confirmAct"]');if(btn)btn.onclick=()=>{window.__confirmAction()};
+}
+function confirmAct(){window.__confirmAction&&window.__confirmAction()}
+/* ========= SETTINGS ACTIONS ========= */
+function setCurrency(c){
+  STATE.settings.currency=c;saveSettings();
+  notifySuccess('Currency set to '+c);renderSettings(document.getElementById('page'));
+}
+function setThemeFromUI(t){setThemeMode(t);renderLayout(currentRoute())}
+function reseedDemo(){
+  store.clear();
+  const seedData=seed();
+  STATE.users=seedData.users;STATE.circles=seedData.circles;STATE.expenses=seedData.expenses;STATE.trips=seedData.trips;
+  STATE.currentUserId='u_alex';STATE.currentCircleId='c_family';
+  STATE.settings={theme:document.documentElement.classList.contains('dark')?'dark':'light',currency:'PHP'};
+  saveState();saveSettings();closeModal();
+  notifySuccess('Data reset — demo restored');route();
+}
+
+/* ========= FAB (quick add) ========= */
+function fab(){
+  const role=myRole(STATE.currentCircleId,STATE.currentUserId);
+  if(!can.log(role))return '';
+  return `<button class="fab" onclick="openAddExpense()" title="Add expense">${ico('plus','w-6 h-6')}</button>`;
+}
+
+/* ========= INIT ========= */
+function init(){
+  loadState();
+  applySavedTheme();
+  window.addEventListener('hashchange',route);
+  window.addEventListener('beforeunload',saveState);
+  route();
+}
+function applySavedTheme(){
+  const t=STATE.settings.theme||(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  document.documentElement.classList.toggle('dark',t==='dark');
+}
+document.addEventListener('DOMContentLoaded',init);
+/* expose for onclick handlers */
+window.openAddExpense=openAddExpense;window.closeModal=closeModal;window.openUserSwitcher=openUserSwitcher;window.switchUser=switchUser;
+window.openCircleSwitcher=openCircleSwitcher;window.switchCircle=switchCircle;window.openAddTrip=openAddTrip;window.openTripDetail=openTripDetail;window.deleteTrip=deleteTrip;
+window.createCircle=createCircle;window.joinCircleSubmit=joinCircleSubmit;window.openManageCircle=openManageCircle;window.changeMemberRole=changeMemberRole;
+window.removeMember=removeMember;window.addMember=addMember;window.copyInviteCode=copyInviteCode;window.saveExpense=saveExpense;window.saveTrip=saveTrip;
+window.saveTripExpense=saveTripExpense;window.openEditTrip=openEditTrip;window.openAddTripExpense=openAddTripExpense;window.openConfirmCircleDelete=openConfirmCircleDelete;
+window.openConfirmReset=openConfirmReset;window.filterExpenses=filterExpenses;window.openFilterExpenses=openFilterExpenses;window.toggleTheme=toggleTheme;
+window.setThemeMode=setThemeMode;window.setCurrency=setCurrency;window.exportExpensesCSV=exportExpensesCSV;window.exportTripsCSV=exportTripsCSV;
+window.pickCategory=pickCategory;window.pickTripCat=pickTripCat;window.toggleTripMember=toggleTripMember;window.pickTripStatus=pickTripStatus;window.confirmAct=confirmAct;
+window.openCreateCircle=openCreateCircle;
+</script>
+</body>
+</html>
