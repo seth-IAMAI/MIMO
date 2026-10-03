@@ -88,9 +88,12 @@ html.dark .modal-card{background:rgba(15,23,42,.92);border:1px solid rgba(51,65,
 @media(min-width:768px){@keyframes slideUp{from{transform:translateY(20px) scale(.97);opacity:0}to{transform:none;opacity:1}}}
 .bottom-tab{position:fixed;bottom:0;left:0;right:0;z-index:60;padding:.5rem .75rem calc(.5rem + env(safe-area-inset-bottom)) .75rem;background:rgba(255,255,255,.85);backdrop-filter:blur(20px);border-top:1px solid rgba(148,163,184,.25);display:flex;justify-content:space-around}
 html.dark .bottom-tab{background:rgba(15,23,42,.85);border-top-color:rgba(51,65,85,.55)}
-.bottom-tab a{flex:1;display:flex;flex-direction:column;align-items:center;gap:.15rem;padding:.45rem 0;border-radius:.85rem;font-size:.65rem;font-weight:600;color:rgb(var(--c-muted));text-decoration:none}
-.bottom-tab a.active{color:#059669;background:rgba(16,185,129,.1)}
-html.dark .bottom-tab a.active{color:#34d399;background:rgba(16,185,129,.18)}
+.bottom-tab a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15rem;min-height:48px;padding:.35rem 0;border-radius:.85rem;font-size:.65rem;font-weight:600;color:rgb(var(--c-muted));text-decoration:none;-webkit-tap-highlight-color:transparent;transition:color .15s ease,background .15s ease,transform .15s ease}
+.bottom-tab a:active{transform:scale(.92)}
+.bottom-tab a.active{color:#059669;background:rgba(16,185,129,.12)}
+html.dark .bottom-tab a.active{color:#34d399;background:rgba(16,185,129,.22)}
+.bottom-tab a svg{transition:transform .2s cubic-bezier(.2,.9,.3,1.4)}
+.bottom-tab a.active svg{transform:scale(1.12)}
 .side-rail{display:none;position:sticky;top:5rem;flex-direction:column;gap:.4rem}
 @media(min-width:1024px){.side-rail{display:flex}}
 .side-rail a{display:flex;align-items:center;gap:.7rem;padding:.65rem .85rem;border-radius:.85rem;font-weight:500;color:rgb(var(--c-muted));text-decoration:none;font-size:.9rem;transition:background .15s ease,color .15s ease}
@@ -99,11 +102,17 @@ html.dark .bottom-tab a.active{color:#34d399;background:rgba(16,185,129,.18)}
 html.dark .side-rail a.active{color:#34d399;background:linear-gradient(135deg,rgba(16,185,129,.25),rgba(244,63,94,.12))}
 .brand-glow{position:relative}
 .brand-glow::before{content:"";position:absolute;inset:-3px;border-radius:14px;background:linear-gradient(135deg,#10b981,#f43f5e);filter:blur(8px);opacity:.35;z-index:-1}
-.fab{position:fixed;right:1rem;z-index:55;width:3.5rem;height:3.5rem;border-radius:9999px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#10b981,#059669);color:#fff;box-shadow:0 10px 30px rgba(16,185,129,.45);cursor:pointer;transition:transform .15s ease}
+.fab{position:fixed;right:1rem;z-index:55;width:3.75rem;height:3.75rem;border-radius:9999px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#10b981,#059669);color:#fff;box-shadow:0 10px 30px rgba(16,185,129,.45),0 0 0 4px rgba(16,185,129,.15);cursor:pointer;transition:transform .15s ease;-webkit-tap-highlight-color:transparent}
 .fab:hover{transform:scale(1.06)}
-.fab:active{transform:scale(.96)}
+.fab:active{transform:scale(.94)}
 @media(min-width:768px){.fab{bottom:1.5rem}.fab-mobile{bottom:5rem}}
-@media(max-width:767px){.fab{bottom:5rem}}
+@media(max-width:767px){.fab{bottom:calc(5rem + env(safe-area-inset-bottom))}}
+.tap-fb:active{transform:scale(.97);transition:transform .12s ease}
+.kpi-num,.glass{transition:transform .18s ease,box-shadow .18s ease}
+.glass:active{transform:scale(.995)}
+.scrim-text{text-shadow:0 2px 12px rgba(0,0,0,.55),0 1px 2px rgba(0,0,0,.5)}
+@media(max-width:767px){.modal-card{max-width:none;width:100%;max-height:96vh;height:96vh;border-radius:1.5rem 1.5rem 0 0;padding:1rem 1rem calc(1.25rem + env(safe-area-inset-bottom)) 1rem}}
+@media(max-width:767px){.modal-card.has-handle::before{content:"";display:block;width:38px;height:4px;border-radius:2px;background:rgba(148,163,184,.45);margin:0 auto .75rem auto}}
 .skeleton{background:linear-gradient(90deg,rgba(148,163,184,.15) 25%,rgba(148,163,184,.35) 50%,rgba(148,163,184,.15) 75%);background-size:200% 100%;animation:skel 1.4s ease-in-out infinite}
 @keyframes skel{from{background-position:200% 0}to{background-position:-200% 0}}
 </style>
@@ -424,12 +433,15 @@ const PAGES=[
   {id:'settings',label:'Settings',icon:'settings'}
 ];
 function brandMark(){
-  return `<a href="#/dashboard" class="flex items-center gap-2.5 text-lg sm:text-xl font-extrabold brand-mark">`+
-    `<span class="w-9 h-9 rounded-2xl gradient-emerald shadow-lg shadow-emerald-500/30 flex items-center justify-center text-white shrink-0">`+
-    `<svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5h12a4 4 0 0 1 0 8H8a3 3 0 0 0 0 6h13"/><path d="M21 9.5V6"/><path d="M18 6l3 0 0 3"/></svg>`+
-    `</span>`+
-    `<span class="leading-none tracking-slim"><span class="cursive gradient-text">MIMO</span><span class="text-[0.6rem] font-bold text-muted tracking-widest block mt-0.5 text-slate-400 dark:text-slate-500">MONEY IN · MONEY OUT</span></span>`+
-    `</a>`;
+  return `<a href="#/dashboard" class="flex items-center gap-2 sm:gap-2.5 text-lg sm:text-xl font-extrabold brand-mark min-w-0">
+    <span class="w-9 h-9 rounded-2xl gradient-emerald shadow-lg shadow-emerald-500/30 flex items-center justify-center text-white shrink-0">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5h12a4 4 0 0 1 0 8H8a3 3 0 0 0 0 6h13"/><path d="M21 9.5V6"/><path d="M18 6l3 0 0 3"/></svg>
+    </span>
+    <span class="leading-none tracking-slim min-w-0">
+      <span class="cursive gradient-text">MIMO</span>
+      <span class="hidden sm:block text-[0.6rem] font-bold tracking-widest mt-0.5 text-slate-400 dark:text-slate-500">MONEY IN · MONEY OUT</span>
+    </span>
+  </a>`;
 }
 function userChip(){
   const u=currentUser();
@@ -465,13 +477,17 @@ function bottomTabs(active){
   const tabs=PAGES.filter(p=>p.id!=='settings');
   return `<nav class="bottom-tab md:hidden">`+tabs.map(p=>{
     const a=p.id===active;
-    return `<a href="#/${p.id}" class="${a?'active':''}">${ico(p.icon,'w-5 h-5')}<span>${p.label}</span></a>`;
-  }).join('')+`<a href="#/settings" class="${active==='settings'?'active':''}">${ico('settings','w-5 h-5')}<span>Settings</span></a>`+`</nav>`;
+    return `<a href="#/${p.id}" class="${a?'active':''}" aria-label="${p.label}">${ico(p.icon,'w-5 h-5')}<span>${p.label}</span></a>`;
+  }).join('')+`</nav>`;
 }
 function renderLayout(active){
   const app=document.getElementById('app');
+  const showFab=active!=='circles'&&active!=='settings';
+  const fab=showFab?`<button class="fab" onclick="openAddExpense()" title="Add expense" aria-label="Add expense">
+    <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>`:'';
   app.innerHTML=`
-    <header class="sticky top-0 z-50 glass-strong backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/40">
+    <header class="sticky top-0 z-50 glass-strong backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/40" style="padding-top:env(safe-area-inset-top)">
       <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
         ${brandMark()}
         ${navLinks(active)}
@@ -487,6 +503,7 @@ function renderLayout(active){
       <div id="page" class="flex-1 min-w-0 fade-in"></div>
     </main>
     ${bottomTabs(active)}
+    ${fab}
   `;
   renderPage(active);
 }
@@ -1053,20 +1070,26 @@ function renderSettings(page){
 /* ========= USER SWITCHER ========= */
 function openUserSwitcher(){
   const m=document.createElement('div');m.className='modal-backdrop';
+  const dark=document.documentElement.classList.contains('dark');
   m.innerHTML=`
-    <div class="modal-card">
-      <div class="flex items-center justify-between mb-4"><h3 class="font-bold text-lg">Switch user</h3><button onclick="closeModal()" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">${ico('x','w-5 h-5')}</button></div>
+    <div class="modal-card has-handle">
+      <div class="flex items-center justify-between mb-4"><h3 class="font-bold text-lg">Switch user</h3><button onclick="closeModal()" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 tap-fb">${ico('x','w-5 h-5')}</button></div>
       <p class="text-xs text-slate-400 mb-3">Demo login — pick who you are. Your role in each circle is shown.</p>
       <div class="space-y-1.5 max-h-72 overflow-auto scrollbar-thin">`+
         STATE.users.map(u=>{
           const isCur=u.id===STATE.currentUserId;
           const roles=STATE.circles.map(c=>{const r=memberRoleIn(c,u.id);return r?`${c.emoji} ${ROLES[r].label}`:null}).filter(Boolean);
-          return `<button onclick="switchUser('${u.id}')" class="w-full flex items-center gap-3 p-3 rounded-2xl ${isCur?'bg-emerald-500/10 border border-emerald-300':'hover:bg-slate-500/5 border border-transparent'} transition-colors text-left">
+          return `<button onclick="switchUser('${u.id}')" class="w-full flex items-center gap-3 p-3 rounded-2xl tap-fb ${isCur?'bg-emerald-500/10 border border-emerald-300':'hover:bg-slate-500/5 border border-transparent'} transition-colors text-left">
             <span class="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0" style="background:${avatarBg(u.id)}">${initials(u.name)}</span>
             <span class="flex-1 min-w-0"><span class="block font-semibold text-sm truncate">${escapeHtml(u.name)}</span><span class="text-xs text-slate-400">${escapeHtml(u.handle)}</span></span>
             <span class="flex flex-col gap-0.5 items-end">${roles.slice(0,2).map(r=>`<span class="chip chip-slate !text-[0.55rem]">${r}</span>`).join('')}${isCur?`<span class="chip chip-emerald">Active</span>`:''}</span>
           </button>`;
         }).join('')+`
+      </div>
+      <div class="divider my-3"></div>
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="closeModal();toggleTheme()" class="btn btn-outline text-xs tap-fb">${dark?ico('sun','w-4 h-4'):ico('moon','w-4 h-4')} ${dark?'Light':'Dark'} mode</button>
+        <a href="#/settings" onclick="closeModal()" class="btn btn-outline text-xs tap-fb">${ico('settings','w-4 h-4')} Settings</a>
       </div>
     </div>`;
   const mr=document.getElementById('modal-root');mr.innerHTML='';mr.appendChild(m);
@@ -1091,7 +1114,7 @@ function openTripDetail(tripId){
   const m=document.createElement('div');m.className='modal-backdrop';
   const memberSet=new Set(t.members||[]);
   m.innerHTML=`
-    <div class="modal-card !max-w-2xl">
+    <div class="modal-card has-handle !max-w-2xl">
       <div class="flex items-start justify-between mb-3">
         <div class="flex items-center gap-3">
           <span class="w-12 h-12 rounded-2xl gradient-blue text-white flex items-center justify-center">${ico('plane','w-6 h-6')}</span>
@@ -1204,8 +1227,8 @@ function openAddExpense(editId){
   const payers=c.members.filter(m=>userById(m.userId));
   const m=document.createElement('div');m.className='modal-backdrop';
   m.innerHTML=`
-    <div class="modal-card">
-      <div class="flex items-center justify-between mb-4"><h3 class="font-bold text-lg">${e?'Edit expense':'Add expense'}</h3><button onclick="closeModal()" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">${ico('x','w-5 h-5')}</button></div>
+    <div class="modal-card has-handle">
+      <div class="flex items-center justify-between mb-4"><h3 class="font-bold text-lg">${e?'Edit expense':'Add expense'}</h3><button onclick="closeModal()" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 tap-fb">${ico('x','w-5 h-5')}</button></div>
       <div class="space-y-4">
         <div>
           <label class="label">Amount (${currency})</label>
@@ -1264,8 +1287,8 @@ function openAddTrip(editId){
   const memSet=new Set((t?t.members:[]).map(id=>id));
   const inTrip=id=>memSet.has(id);
   m.innerHTML=`
-    <div class="modal-card !max-w-xl">
-      <div class="flex items-center justify-between mb-4"><h3 class="font-bold text-lg">${t?'Edit trip':'New trip'}</h3><button onclick="closeModal()" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">${ico('x','w-5 h-5')}</button></div>
+    <div class="modal-card has-handle !max-w-xl">
+      <div class="flex items-center justify-between mb-4"><h3 class="font-bold text-lg">${t?'Edit trip':'New trip'}</h3><button onclick="closeModal()" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 tap-fb">${ico('x','w-5 h-5')}</button></div>
       <div class="space-y-4">
         <div class="grid grid-cols-2 gap-3">
           <div><label class="label">Trip name</label><input id="tr-name" value="${t?escapeHtml(t.name):''}" class="input" placeholder="Baguio Weekend" /></div>
@@ -1542,6 +1565,56 @@ window.openConfirmReset=openConfirmReset;window.filterExpenses=filterExpenses;wi
 window.setThemeMode=setThemeMode;window.setCurrency=setCurrency;window.exportExpensesCSV=exportExpensesCSV;window.exportTripsCSV=exportTripsCSV;
 window.pickCategory=pickCategory;window.pickTripCat=pickTripCat;window.toggleTripMember=toggleTripMember;window.pickTripStatus=pickTripStatus;window.confirmAct=confirmAct;
 window.openCreateCircle=openCreateCircle;
+
+/* ========= SWIPE GESTURE (mobile) ========= */
+(function(){
+  let sx=0,sy=0,st=0,active=false,dir='';
+  const THRESH=70,MAX_T=600;
+  function routeList(){
+    return ['dashboard','expenses','trips','analytics','circles'];
+  }
+  function getRoute(){
+    return (location.hash.replace('#/','')||'dashboard');
+  }
+  document.addEventListener('touchstart',e=>{
+    if(document.querySelector('.modal-backdrop'))return;
+    if(e.touches.length!==1)return;
+    const t=e.touches[0];
+    sx=t.clientX;sy=t.clientY;st=Date.now();active=true;dir='';
+  },{passive:true});
+  document.addEventListener('touchmove',e=>{
+    if(!active)return;
+    const t=e.touches[0];
+    const dx=t.clientX-sx,dy=t.clientY-sy;
+    if(!dir){
+      if(Math.abs(dx)<15&&Math.abs(dy)<15)return;
+      dir=Math.abs(dx)>Math.abs(dy)?'h':'v';
+      if(dir==='v'){active=false;return;}
+    }
+    if(dir==='h'&&Math.abs(dx)>10){
+      // gentle translate visual feedback on main
+      const main=document.querySelector('main');
+      if(main)main.style.transform='translateX('+(dx*0.18)+'px)';
+    }
+  },{passive:true});
+  document.addEventListener('touchend',e=>{
+    if(!active)return;active=false;
+    const main=document.querySelector('main');
+    if(main)main.style.transform='';
+    const t=e.changedTouches[0];
+    const dx=t.clientX-sx,dy=t.clientY-sy,dt=Date.now()-st;
+    if(dir!=='h')return;
+    if(Math.abs(dx)<THRESH||dt>MAX_T)return;
+    const routes=routeList();
+    const i=routes.indexOf(getRoute());
+    if(dx>0&&i>0){
+      location.hash='#/'+routes[i-1];
+    }else if(dx<0&&i>=0&&i<routes.length-1){
+      location.hash='#/'+routes[i+1];
+    }
+  },{passive:true});
+})();
+
 </script>
 </body>
 </html>
